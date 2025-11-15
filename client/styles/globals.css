@@ -1,0 +1,254 @@
+@import url('https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gotu&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rozha+One&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.font-devanagari { font-family: 'Tiro Devanagari Hindi', serif; }
+.font-playfair-display { font-family: 'Playfair Display', serif; }
+.font-inter { font-family: 'Inter', sans-serif; }
+.font-handwriting { font-family: 'Kalam', cursive; }
+.font-calligraphy { font-family: 'Gotu', serif; } 
+.font-rozha { font-family: 'Rozha One', serif; } 
+
+:root {
+  /* BACKGROUND & BASE */
+  --color-antique-paper: #F7F4EF; /* Soft Creamy White - Primary BG */
+  --color-inky-charcoal: #2C3E50; /* Deep Indigo/Navy - Primary Text/Headings */
+  --color-muted-saffron: #C27B22; /* Rich Brownish-Gold - Accent/Highlight */
+  
+  /* KALIGHAT/MADHUBANI ACCENTS (Secondary Pop Colors) */
+  --color-kalighat-red: #B83D43; /* Bold, primary Red for alerts/strong action */
+  --color-kalighat-indigo: #4A4E69; /* Deep indigo for subtle borders */
+  
+  /* UI ELEMENTS */
+  --color-ui-text-light: #4A4A4A; /* Secondary UI text (e.g., metadata) */
+  --color-border-subtle: #D8D2C5; /* Light border color */
+  
+  /* Mapped to Tailwind config */
+  --color-primary: var(--color-inky-charcoal); 
+  --color-accent: var(--color-muted-saffron);
+  --color-bg: var(--color-antique-paper);
+}
+
+/* Dark Theme (Inky Cinematic Mode) */
+[data-theme='dark'] {
+  /* BACKGROUND & BASE */
+  --color-antique-paper: #1A1A1A; /* Near Black - Primary BG */
+  --color-inky-charcoal: #E2DED7; /* Off-White Text for contrast */
+  --color-muted-saffron: #FFCF5C; /* Bright Gold - Accent/Highlight */
+  
+  /* KALIGHAT/MADHUBANI ACCENTS */
+  --color-kalighat-red: #E87171; /* Slightly brighter red for visibility */
+  --color-kalighat-indigo: #787D94; /* Lighter indigo for subtle borders */
+
+  /* UI ELEMENTS */
+  --color-ui-text-light: #B0B0B0; /* Secondary UI text (e.g., metadata) */
+  --color-border-subtle: #3A3A3A; /* Dark border color */
+
+  /* Mapped to Tailwind config */
+  --color-primary: var(--color-inky-charcoal); 
+  --color-accent: var(--color-muted-saffron);
+  --color-bg: var(--color-antique-paper);
+}
+
+
+/* --- GLOBAL RESETS AND READABILITY --- */
+
+/* Reset default margins and paddings (Best Practice) */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Global styles applied via Tailwind utility classes */
+body {
+  background: url('/bg.jpg') no-repeat center center fixed; 
+  background-size: cover; /* image stretch hogi full screen ke liye */
+  color: var(--color-primary);
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s, color 0.3s;
+  overflow-x: hidden;
+}
+
+
+/* Ensure proper line-height for Devanagari in reading content */
+.reading-body {
+    line-height: 1.8; 
+    letter-spacing: 0.01em;
+}
+
+/* Slider spacing + safe defaults */
+.editor-slider .slick-slide {
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+.editor-slider .slick-list {
+  margin: 0 -8px;
+}
+
+.editor-slider .slick-slide > div {
+  display: block;
+}
+
+.editor-slider .slick-track {
+  display: flex;
+}
+
+.editor-slider img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Prevent layout shifts */
+main {
+  min-height: calc(100vh - 200px);
+}
+
+/* Sidebar adjustments for mobile */
+@media (max-width: 768px) {
+  aside {
+    position: relative;
+    width: 100% !important;
+  }
+}
+
+
+/* ========================================================== */
+/* FINAL CSS ADJUSTMENTS (in globals.css)                     */
+/* ========================================================== */
+
+.notebook-container {
+    /* Keep the surface background and centering */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+
+}
+
+.notebook-layout {
+
+    background-image: url('/notebook.jpg'); 
+    background-size: contain; 
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    
+    aspect-ratio: 1.4 / 1; 
+    max-width: 800px; 
+    width: 100%;
+    height: auto; 
+
+    display: flex;
+    position: relative;
+}
+
+.notebook-page {
+
+    background-color: transparent; 
+    border: none;
+    flex-grow: 1;
+    width: 50%;
+    height: 100%;
+    box-sizing: border-box;
+    position: relative;
+    /* Ensure content is positioned correctly */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Align content to the top of the page */
+}
+
+/* --- Alignment is the Key --- */
+/* Adjust padding to position content directly on the left page */
+.left-page {
+    /* Top Right(Binding) Bottom Left(Outer edge) */
+    padding: 18% 5% 15% 15%; 
+    align-items: center;
+    text-align: center;
+}
+
+/* Adjust padding to position content directly on the right page */
+.right-page {
+    /* Top Left(Binding) Bottom Right(Outer edge) */
+    padding: 10% 15% 15% 5%; 
+    align-items: center;
+    text-align: center;
+}
+
+/* --- Content Styling --- */
+.hindi-text {
+    /* Adjusting size and color to look like it's written on the page */
+    font-size: clamp(1em, 2vw, 1.4em);
+    line-height: 1.6;
+    color: #333; /* Dark ink color */
+    margin-bottom: 20px;
+    /* Since the text is centered on the left page, remove the rotation */
+    transform: none; 
+}
+
+.page-title {
+    /* The "स्वयं" title on the right page (assuming it's dynamic) */
+    font-size: clamp(2em, 4vw, 3em); 
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.illustration-placeholder {
+    /* Styling the placeholder box */
+    width: 100%; 
+    /* Set height relative to the parent page, adjusted for the title and margins */
+    height: 90%; 
+    /* background-color: #fce4ec;  */
+    border-radius: 5px;
+    margin: 0 auto;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1) inset; /* Inner shadow for depth */
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a0a0a0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+    /* Ensure book image is removed/replaced on mobile for a clean stack */
+    .notebook-layout {
+        background-image: none;
+        background-color: #ffffff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        flex-direction: column;
+        aspect-ratio: unset;
+        width: 90%;
+        height: auto;
+        padding: 10px;
+    }
+    .notebook-page {
+        width: 100%;
+        padding: 20px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        align-items: center;
+        text-align: center;
+    }
+}

@@ -1,0 +1,242 @@
+ <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-10">
+        <h2 className="text-2xl font-semibold mb-6 text-primary flex items-center gap-2">
+          <FaNewspaper /> {editData ? "Edit" : "Add"} News
+        </h2>
+
+        {/* Title, Slug, Date */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+          <div className="flex items-center gap-2">
+            <FaHeading className="text-primary" />
+            <input
+              name="title"
+              placeholder="Title"
+              value={formData.title}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-3 py-2 w-full"
+              required
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <FaAlignLeft className="text-primary" />
+            <input
+              name="byLine"
+              placeholder="By Line"
+              value={formData.byLine}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-3 py-2 w-full"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <FaLink className="text-primary" />
+            <input
+              name="slug"
+              placeholder="Slug"
+              value={formData.slug}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-3 py-2 w-full"
+              required
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <FaCalendarAlt className="text-primary" />
+            <input
+              type="datetime-local"
+              name="createdAt"
+              value={formData.createdAt}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-3 py-2 w-full"
+            />
+          </div>
+        </div>
+        {/* Description */}
+        <div className="mt-4">
+          <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700">
+            <FaAlignLeft className="text-primary" />
+            Description
+          </label>
+          <EditorConfig
+            value={formData.description}
+            onChange={(value) => handleEditorChange("description", value)}
+          />
+        </div>
+
+        {/* Avlokan */}
+        <div className="mt-4">
+          <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700">
+            <FaEye className="text-primary" />
+            Avlokan
+          </label>
+          <EditorConfig
+            value={formData.avlokan}
+            onChange={(value) => handleEditorChange("avlokan", value)}
+          />
+        </div>
+
+        {/* Categories */}
+        <div className="mt-4">
+          <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700">
+            <FaTags className="text-primary" /> Categories
+          </label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {categoryList.map((cat) => (
+              <label key={cat} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="categories"
+                  value={cat}
+                  checked={formData.categories.some((c) => c.name === cat)}
+                  onChange={handleChange}
+                />
+                {cat.replace(/-/g, " ")}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Category Sections & Priority */}
+        <div className="mt-4 space-y-4">
+          {formData.categories.map((cat, idx) => {
+            const isSectionless = excludedCategories.includes(
+              cat.name.replace(/-/g, " ").toLowerCase()
+            );
+
+            return (
+              <div key={cat.name} className="p-4 border rounded bg-gray-50">
+                <h4 className="font-semibold mb-2">{cat.name.replace(/-/g, " ")}</h4>
+
+                {/* Priority input */}
+                {isSectionless ? (
+                  <div className="flex items-center gap-2 mb-2">
+                    <FaSortNumericUp />
+                    <input
+                      type="number"
+                      placeholder="Priority"
+                      value={cat.priority}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData((prev) => {
+                          const updated = [...prev.categories];
+                          updated[idx].priority = val;
+                          return { ...prev, categories: updated };
+                        });
+                      }}
+                      className="border border-gray-300 rounded px-2 py-1 w-20"
+                    />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {["main", "popular", "latest", "other"].map((sec) => (
+                      <div key={sec} className="flex flex-col gap-1">
+                        <label className="flex items-center gap-1">
+                          <input
+                            type="checkbox"
+                            checked={cat.section[sec]?.show || false}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setFormData((prev) => {
+                                const updated = [...prev.categories];
+                                updated[idx].section[sec].show = checked;
+                                return { ...prev, categories: updated };
+                              });
+                            }}
+                          />
+                          {sec}
+                        </label>
+                        <input
+                          type="number"
+                          placeholder="Priority"
+                          value={cat.section[sec]?.priority || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData((prev) => {
+                              const updated = [...prev.categories];
+                              updated[idx].section[sec].priority = val;
+                              return { ...prev, categories: updated };
+                            });
+                          }}
+                          className="border border-gray-300 rounded px-2 py-1 w-full"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Tags */}
+        <div className="mt-4">
+          <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700">
+            <FaTags /> Tags (comma separated)
+          </label>
+          <input
+            type="text"
+            name="tags"
+            value={formData.tags.join(", ")}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                tags: e.target.value.split(",").map((t) => t.trim()),
+              }))
+            }
+            className="border border-gray-300 rounded px-3 py-2 w-full"
+          />
+        </div>
+
+        {/* Media Upload */}
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700">
+              <FaImage /> Image
+            </label>
+            <input type="file" name="image" onChange={handleChange} accept="image/*" />
+          </div>
+          <div>
+            <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700">
+              <FaVideo /> Video URL
+            </label>
+            <input
+              type="text"
+              name="videoUrl"
+              value={formData.videoUrl}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-3 py-2 w-full"
+            />
+          </div>
+          <div>
+            <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700">
+              <FaMicrophone /> Audio
+            </label>
+            <input type="file" name="audio" onChange={handleChange} accept="audio/*" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+  <FaUser className="text-primary" />
+  <input
+    name="authoredBy"
+    placeholder="Author Name"
+    value={formData.authoredBy}
+    onChange={handleChange}
+    className="border border-gray-300 rounded px-3 py-2 w-full"
+  />
+</div>
+
+
+        {/* Submit / Cancel */}
+        <div className="mt-6 flex gap-4">
+          <button
+            type="submit"
+            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark"
+          >
+            <FaSave /> {editData ? "Update" : "Save"} News
+          </button>
+          <button
+            type="button"
+            onClick={clearForm}
+            className="flex items-center gap-2 bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
+          >
+            <FaTimes /> Clear
+          </button>
+        </div>
+      </form>

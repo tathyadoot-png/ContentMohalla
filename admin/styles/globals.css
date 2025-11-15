@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Root variables for light mode */
+:root {
+  --color-primary: #5c4033; /* Vintage Brown */
+  --color-secondary: #f8f0e3; /* Vintage OffWhite */
+  --color-accent: #e3b23c; /* Vintage Yellow */
+  --color-text: #000000;
+  --color-bg: #f8f0e3;
+
+  /* New additions */
+  --color-border: #f8f0e3; /* Dark border for light mode */
+  --color-card: #ffffff; /* Card background */
+  --color-muted: #ede7dd; /* Muted subtle bg */
+  --color-hover: #d9a441; /* Accent hover (darker yellow) */
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] {
+  --color-primary: #f8f0e3;
+  --color-secondary: #5c4033;
+  --color-accent: #e3b23c;
+  --color-text: #f8f0e3;
+  --color-bg: #1e1e1e;
+
+  /* Dark equivalents */
+  --color-border: #3a2c23; /* Light border for dark bg */
+  --color-card: #2a2a2a; /* Dark card background */
+  --color-muted: #3a3a3a; /* Muted dark shade */
+  --color-hover: #ffcf5c; /* Brighter yellow for dark hover */
+}
+
+/* Tailwind utility overrides */
+.bg-primary {
+  background-color: var(--color-primary);
+}
+.bg-secondary {
+  background-color: var(--color-secondary);
+}
+.bg-accent {
+  background-color: var(--color-accent);
+}
+.bg-card {
+  background-color: var(--color-card);
+}
+.bg-muted {
+  background-color: var(--color-muted);
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+.text-secondary {
+  color: var(--color-secondary);
+}
+.text-accent {
+  color: var(--color-accent);
+}
+
+.border-custom {
+  border-color: var(--color-border);
+}
+
+.hover-accent:hover {
+  background-color: var(--color-hover);
+}
+
+body {
+  font-family: "Old Standard TT", serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.3s, color 0.3s;
+}
