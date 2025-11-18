@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import writer from '../../public/writer.png'
+
+
 
 export default function PoetrySiteRegistration() {
   const [form, setForm] = useState({

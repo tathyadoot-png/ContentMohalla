@@ -19,11 +19,12 @@ const buildSocialLinksFromBody = (body) => {
   return social;
 };
 
-// 🟢 REGISTER USER
+// Add your default Cloudinary avatar URL
+const DEFAULT_AVATAR = "https://res.cloudinary.com/dw8ck8ubc/image/upload/v1763451349/Avatar_tpglgf.jpg";
+
+// REGISTER USER
 export const registerUser = async (req, res) => {
   try {
-    console.log("📥 Received body:", req.body);
-
     const {
       fullName,
       penName,
@@ -37,31 +38,30 @@ export const registerUser = async (req, res) => {
       location,
     } = req.body;
 
-    // ✅ Always define socialLinks here FIRST
     const socialLinks = buildSocialLinksFromBody(req.body);
 
-    // ✅ Optional: Cloudinary image (if using multer)
-    const avatarUrl = req.file ? req.file.path || req.file.secure_url || "" : "";
+    // If user uploaded image → use that
+    // If not uploaded → use DEFAULT_AVATAR
+    const avatarUrl = req.file
+      ? req.file.path || req.file.secure_url
+      : DEFAULT_AVATAR;
 
-    // ✅ Basic validation
     if (!fullName || !email || !password) {
-      return res
-        .status(400)
-        .json({ message: "fullName, email, and password are required" });
+      return res.status(400).json({
+        message: "fullName, email, and password are required",
+      });
     }
+
     if (password !== confirmPassword) {
       return res.status(400).json({ message: "Passwords do not match" });
     }
 
-    // ✅ Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ message: "User already exists" });
 
-    // ✅ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Create user
     const newUser = new User({
       fullName,
       penName,
@@ -72,8 +72,8 @@ export const registerUser = async (req, res) => {
       tagline: tagline || "",
       profession: profession || "",
       location: location || "",
-      avatar: avatarUrl,
-      socialLinks, // ✅ Now always defined
+      avatar: avatarUrl, // ← always saved
+      socialLinks,
       role: "user",
     });
 
@@ -84,13 +84,15 @@ export const registerUser = async (req, res) => {
       userId: newUser._id,
       uniqueId: newUser.uniqueId,
     });
+
   } catch (err) {
-    console.error("❌ Register error =>", err);
-    res
-      .status(500)
-      .json({ message: "Server error during registration", error: err.message });
+    res.status(500).json({
+      message: "Server error during registration",
+      error: err.message,
+    });
   }
 };
+
 
 export const loginUser = async (req, res) => {
   try {

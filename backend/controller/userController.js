@@ -6,84 +6,99 @@ import Poem from "../models/Poem.js";
 
 
 
-
 export const getUserProfile = async (req, res) => {
   try {
-    // req.user is already set by protect middleware
     const user = await User.findById(req.user._id)
-      .select("-password") // never send password
-      .populate("bookmarks", "title slug createdAt");
+      .select("-password")
+      .populate("bookmarks", "title slug createdAt")
+      .lean();
 
-    if (!user) {
+    if (!user)
       return res.status(404).json({ success: false, message: "User not found" });
-    }
 
-    res.status(200).json({
+    // Counts
+    const poemCount = await Poem.countDocuments({ author: req.user._id, category: "poem" });
+    const gadhyaCount = await Poem.countDocuments({ author: req.user._id, category: "gadhya" });
+    const kavyaCount = await Poem.countDocuments({ author: req.user._id, category: "kavya" });
+    const audioCount = await Poem.countDocuments({ author: req.user._id, type: "audio" });
+
+    user.stats = {
+      poems: poemCount,
+      gadhya: gadhyaCount,
+      kavya: kavyaCount,
+      audio: audioCount,
+      followers: user.followers?.length || 0,
+    };
+
+    return res.status(200).json({
       success: true,
       message: "Profile fetched successfully",
       data: user,
     });
   } catch (error) {
     console.error("Error fetching profile:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
 
-// 🟢 UPDATE USER PROFILE
-// controllers/userController.js (updateUserProfile)
+
 export const updateUserProfile = async (req, res) => {
   try {
-    // Accept multiple places for user id
-    const userId =
-      // if protect set req.user as User document (mongoose doc)
-      req.user?._id?.toString() ||
-      // if verifyToken set decoded payload with userId or id
-      req.user?.userId ||
-      req.user?.id ||
-      // fallback to body
-      req.body.userId;
+    const userId = req.user._id;
 
     if (!userId) {
-      return res.status(400).json({ success: false, message: "User ID is required" });
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    const updates = { ...req.body };
+    let updates = { ...req.body };
 
-    // Disallow updating restricted fields
-    const restricted = ["password", "_id", "email", "role"];
-    restricted.forEach((field) => delete updates[field]);
+    // ❌ These should NEVER be updated
+    delete updates.password;
+    delete updates.email;
+    delete updates.role;
+    delete updates._id;
 
-    // Handle avatar if using multer
+    // ❌ FIX → remove bookmarks (causing CastError)
+    delete updates.bookmarks;
+    delete updates.favourites;
+    delete updates.savedPosts;
+
+    // Convert social links
+    if (updates.socialLinks && typeof updates.socialLinks === "string") {
+      try {
+        updates.socialLinks = JSON.parse(updates.socialLinks);
+      } catch (e) {}
+    }
+
+    // Avatar upload (if file provided)
     if (req.file) {
-      updates.avatar = req.file.path || req.file.secure_url || "";
+      updates.avatar = `/uploads/${req.file.filename}`;
     }
 
-    if (updates.socialLinks && typeof updates.socialLinks === "object") {
-      const social = {};
-      Object.keys(updates.socialLinks).forEach((key) => {
-        social[key] = updates.socialLinks[key];
-      });
-      updates.socialLinks = social;
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true })
-      .select("-password")
-      .lean();
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true }
+    ).select("-password");
 
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // **Return response shape frontend expects**
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully",
       data: updatedUser,
     });
+
   } catch (err) {
-    console.error("❌ Update error:", err);
-    return res.status(500).json({ success: false, message: "Server error", error: err.message });
+    console.log("❌ Update error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
 
