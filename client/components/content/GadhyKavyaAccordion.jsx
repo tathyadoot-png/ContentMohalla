@@ -208,13 +208,14 @@ export default function GadhyKavyaAccordion({
     }
   };
 
-  const buildPostHref = (slide) => {
-    const main = slide.category || "kavya";
-    const sub = slide.subcategory || "general";
-    const slug = slide.slug || slide.id || "";
-    return `/${encodeURIComponent(String(main))}/${encodeURIComponent(String(sub))}/${encodeURIComponent(String(slug))}`;
-  };
+const buildPostHref = (slide) => {
+  const main = (slide.category || "kavya").toLowerCase();
+  const sub = (slide.subcategory || "general").toLowerCase();
+  const slug = (slide.slug || slide.id || "").toLowerCase();
 
+  return `/${encodeURIComponent(main)}/${encodeURIComponent(sub)}/${encodeURIComponent(slug)}`;
+};
+  
   const rightImageUrl = img5?.src ?? img5;
 
   // --- RENDER STATES ---

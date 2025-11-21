@@ -287,12 +287,12 @@ const handleDeletePoem = async (id) => {
                           </button>
                         </>
                       )}
-                      <button
+                      {/* <button
                         onClick={() => handleEdit(p)}
                         className="bg-yellow-400 hover:bg-yellow-500 text-white text-xs px-3 py-1 rounded-full"
                       >
                         Edit
-                      </button>
+                      </button> */}
 
                       {/* Delete button (added) */}
                       <button

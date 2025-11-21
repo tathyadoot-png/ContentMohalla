@@ -289,7 +289,10 @@ export default function AdminPostForm({ poemId = null, poemData = null, onUpdate
             <label className="font-medium text-gray-700 mb-2">Main Language Category</label>
             <select name="mainLanguage" value={formData.mainLanguage} onChange={handleMainLanguageChange} className="border p-3 rounded-md w-full">
               <option value="">Select Main Language</option>
-              {languages.map((lang) => <option key={lang._id} value={lang._id || lang.name}>{lang.mainCategory || lang.name}</option>)}
+              {languages.map((lang) => <option key={lang._id} value={lang.mainCategory || lang.name}>
+  {lang.mainCategory || lang.name}
+</option>
+)}
             </select>
           </div>
 
@@ -297,7 +300,10 @@ export default function AdminPostForm({ poemId = null, poemData = null, onUpdate
             <label className="font-medium text-gray-700 mb-2">Sub Language</label>
             <select name="subLanguage" value={formData.subLanguage} onChange={(e) => setFormData(p => ({ ...p, subLanguage: e.target.value }))} disabled={!formData.mainLanguage} className="border p-3 rounded-md w-full">
               <option value="">{formData.mainLanguage ? "Select Sub Language" : "Select Main First"}</option>
-              {subLanguages?.map((s) => <option key={s._id || s.name} value={s._id || s.name}>{s.name || s}</option>)}
+              {subLanguages?.map((s) => <option key={s._id || s.name} value={s.name}>
+  {s.name}
+</option>
+)}
             </select>
           </div>
         </div>

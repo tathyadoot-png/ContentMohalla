@@ -89,5 +89,25 @@ poemSchema.pre("save", function (next) {
   next();
 });
 
+
+// ⭐ FULL TEXT INDEX (everything you want to search)
+poemSchema.index(
+  {
+    title: "text",
+    content: "text",
+    category: "text",
+    subcategory: "text",
+    description: "text",      // If you add description field
+    // Writer fields → via lookup
+    "writer.fullName": "text",
+    "writer.penName": "text"
+  },
+  {
+    default_language: "none",  // Important for Hindi
+    language_override: "none"
+  }
+);
+
+
 const Poem = mongoose.model("Poem", poemSchema);
 export default Poem;

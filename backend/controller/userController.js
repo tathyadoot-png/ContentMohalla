@@ -4,7 +4,7 @@ import User from "../models/User.js";
 import mongoose from "mongoose";
 import Poem from "../models/Poem.js";
 
-
+import cloudinary from "../config/cloudinary.js";
 
 export const getUserProfile = async (req, res) => {
   try {
@@ -16,14 +16,26 @@ export const getUserProfile = async (req, res) => {
     if (!user)
       return res.status(404).json({ success: false, message: "User not found" });
 
-    // Counts
-    const poemCount = await Poem.countDocuments({ author: req.user._id, category: "poem" });
-    const gadhyaCount = await Poem.countDocuments({ author: req.user._id, category: "gadhya" });
-    const kavyaCount = await Poem.countDocuments({ author: req.user._id, category: "kavya" });
-    const audioCount = await Poem.countDocuments({ author: req.user._id, type: "audio" });
+    // Correct counts
+    const totalPoems = await Poem.countDocuments({ writerId: req.user._id });
+
+    const gadhyaCount = await Poem.countDocuments({
+      writerId: req.user._id,
+      category: "Gadhya",
+    });
+
+    const kavyaCount = await Poem.countDocuments({
+      writerId: req.user._id,
+      category: "Kavya",
+    });
+
+    const audioCount = await Poem.countDocuments({
+      writerId: req.user._id,
+      "audio.url": { $ne: "" }, // check if audio file exists
+    });
 
     user.stats = {
-      poems: poemCount,
+      poems: totalPoems,
       gadhya: gadhyaCount,
       kavya: kavyaCount,
       audio: audioCount,
@@ -53,27 +65,29 @@ export const updateUserProfile = async (req, res) => {
 
     let updates = { ...req.body };
 
-    // ❌ These should NEVER be updated
     delete updates.password;
     delete updates.email;
     delete updates.role;
     delete updates._id;
-
-    // ❌ FIX → remove bookmarks (causing CastError)
     delete updates.bookmarks;
     delete updates.favourites;
     delete updates.savedPosts;
 
-    // Convert social links
+    // Convert social links JSON
     if (updates.socialLinks && typeof updates.socialLinks === "string") {
       try {
         updates.socialLinks = JSON.parse(updates.socialLinks);
       } catch (e) {}
     }
 
-    // Avatar upload (if file provided)
+    // 🟢 CLOUDINARY AVATAR UPLOAD FIX
     if (req.file) {
-      updates.avatar = `/uploads/${req.file.filename}`;
+      // 1. Upload to Cloudinary
+      const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+        folder: "contentmohalla/avatars",
+      });
+
+      updates.avatar = uploadResult.secure_url; // 🟢 CORRECT CLOUDINARY URL
     }
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -101,7 +115,6 @@ export const updateUserProfile = async (req, res) => {
     });
   }
 };
-
 
 
 export const getAllUsers = async (req, res) => {

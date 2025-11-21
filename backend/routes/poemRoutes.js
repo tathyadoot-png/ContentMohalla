@@ -12,6 +12,7 @@ import {
   getLatestPoems,
   getMostBookmarked,
   getMostLiked,
+  getMyPoems,
   getPoemById,
   getPoemBySlug,
   getPoemsByCategory,
@@ -21,6 +22,7 @@ import {
   getTopPoems,
   getTrending,
   incrementShareCount,
+  searchPoems,
   toggleBookmark,
   toggleLike,
   updatePoemStatus,
@@ -55,7 +57,9 @@ router.put("/:id/status", protect, authorizeRoles("admin"), updatePoemStatus);
 // 📚 Get poems by category/subcategory
 router.get("/category/:category/:subcategory", getPoemsByCategory);
 
+router.get("/my-poems", protect, getMyPoems);
 
+router.get("/search", searchPoems);
 
 // 💬 Comment on poem
 router.post("/:poemId/comment", protect, addComment);

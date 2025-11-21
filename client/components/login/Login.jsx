@@ -41,7 +41,7 @@ export default function PoetrySiteLogin() {
       if (!res.ok) throw new Error(data.message || "Login failed");
 
       // Save token to localStorage
-      localStorage.setItem("token", data.token);
+   
       setSuccess("लॉगिन सफल हुआ! स्वागत है।");
 
       // Redirect to dashboard (if needed)

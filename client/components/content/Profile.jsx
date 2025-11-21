@@ -11,6 +11,7 @@ import {
   FaMapMarkerAlt,
   FaUser,
 } from "react-icons/fa";
+import MyCreations from "./MyCreations";
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
@@ -131,7 +132,7 @@ export default function ProfilePage() {
     );
 
   return (
-    <div className="min-h-screen dark:bg-[#071126] p-4 text-center">
+    <div className="min-h-screen dark:bg-[#071126]  text-center">
       {/* Cover */}
       <div className="w-full h-52 sm:h-72 md:h-80 rounded-b-3xl bg-gradient-to-r from-[#F6A760]/90 to-[#F29E7A]/60" />
 
@@ -146,6 +147,8 @@ export default function ProfilePage() {
 
         {/* name + penName */}
         <h1 className="text-3xl font-bold mt-4 dark:text-white">
+                    <span className="text-gray-400 font-medium">{user.fullName}</span>
+
           {user.name}{" "}
           {user.penName && (
             <span className="text-gray-400 font-medium">({user.penName})</span>
@@ -180,7 +183,6 @@ export default function ProfilePage() {
             { label: "Gadhya", value: user.stats?.gadhya },
             { label: "Kavya", value: user.stats?.kavya },
             { label: "Audio", value: user.stats?.audio },
-            { label: "Followers", value: user.stats?.followers }
           ].map((stat) => (
             <div key={stat.label}>
               <p className="text-2xl font-bold text-[#E76F51]">
@@ -216,8 +218,8 @@ export default function ProfilePage() {
             <div>
               <label className="text-sm text-gray-600">Name</label>
               <input
-                name="name"
-                value={formData.name || ""}
+                name="fullName"
+                value={formData.fullName || ""}
                 onChange={handleChange}
                 className="w-full p-2 border rounded"
               />
@@ -325,6 +327,8 @@ export default function ProfilePage() {
           </button>
         </form>
       )}
+
+      <MyCreations/>
     </div>
   );
 }

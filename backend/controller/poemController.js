@@ -980,3 +980,82 @@ export const getPoemsExcludingHindi = async (req, res) => {
 };
 
 
+export const getMyPoems = async (req, res) => {
+  try {
+  const poems = await Poem.find({ writerId: req.user._id })
+  .select("title slug category subcategory image audio languages writerId createdAt")
+  .populate("writerId", "fullName penName avatar")
+  .sort({ createdAt: -1 });
+
+
+    return res.status(200).json({
+      success: true,
+      data: poems
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+
+
+
+
+export const searchPoems = async (req, res) => {
+  try {
+    const query = req.query.q?.trim();
+
+    if (!query) {
+      return res.json([]);
+    }
+
+    const results = await Poem.aggregate([
+      // Join writer info
+      {
+        $lookup: {
+          from: "users",
+          localField: "writerId",
+          foreignField: "_id",
+          as: "writer",
+        }
+      },
+
+      { $unwind: "$writer" },
+
+      // Full text search
+      {
+        $match: {
+          $text: { $search: query }
+        }
+      },
+
+      // Priority sorting
+      {
+        $sort: {
+          score: { $meta: "textScore" },
+          createdAt: -1
+        }
+      },
+
+      {
+        $project: {
+          title: 1,
+          slug: 1,
+          category: 1,
+          subcategory: 1,
+          description: 1,
+          content: 1,
+          writerName: "$writer.fullName",
+          writerPen: "$writer.penName",
+          score: { $meta: "textScore" }
+        }
+      }
+    ]);
+
+    res.json(results);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Search failed" });
+  }
+};
