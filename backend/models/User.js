@@ -55,4 +55,18 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
+userSchema.index(
+  {
+    fullName: "text",
+    penName: "text",
+    email: "text",
+  },
+  {
+    default_language: "none",
+    language_override: "none",
+  }
+);
+
+
 export default mongoose.model("User", userSchema);

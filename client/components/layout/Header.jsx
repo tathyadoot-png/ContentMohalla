@@ -13,6 +13,7 @@ import {
   FaMoon,
   FaUserCircle,
 } from "react-icons/fa";
+import SearchOverlay from "../content/SearchOverlay";
 
 const navItems = [
   { name: "Home", path: "/", icon: FaBookOpen },
@@ -105,58 +106,61 @@ export default function Header({ theme, toggleTheme }) {
         </nav>
 
         {/* RIGHT SECTION */}
-        <div className="hidden md:flex items-center gap-4">
-          {user ? (
-            <button
-              onClick={handleLogout}
-              className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-1 rounded-full font-semibold transition"
-            >
-              Logout
-            </button>
-          ) : (
-            <a
-              href="/login"
-              className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-1 rounded-full font-semibold transition"
-            >
-              Login
-            </a>
-          )}
+<div className="hidden md:flex items-center gap-4">
+  
+  {/* Search Bar */}
+  <SearchOverlay theme={theme} />
 
-          <a
-            href="/bookmarks"
-            className={`border px-3 py-1 rounded-full text-sm transition ${
-              theme === "dark"
-                ? "text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black"
-                : "text-amber-700 border-amber-500 hover:bg-amber-500 hover:text-black"
-            }`}
-          >
-            मेरा संकलन
-          </a>
+  {user ? (
+    <button
+      onClick={handleLogout}
+      className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-1 rounded-full font-semibold transition"
+    >
+      Logout
+    </button>
+  ) : (
+    <a
+      href="/login"
+      className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-1 rounded-full font-semibold transition"
+    >
+      Login
+    </a>
+  )}
 
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full bg-transparent hover:bg-amber-500/20 transition"
-            aria-label="toggle theme"
-          >
-            {theme === "dark" ? (
-              <FaSun className="text-amber-300 w-5 h-5" />
-            ) : (
-              <FaMoon className="text-amber-600 w-5 h-5" />
-            )}
-          </button>
+  <a
+    href="/bookmarks"
+    className={`border px-3 py-1 rounded-full text-sm transition ${
+      theme === "dark"
+        ? "text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black"
+        : "text-amber-700 border-amber-500 hover:bg-amber-500 hover:text-black"
+    }`}
+  >
+    मेरा संकलन
+  </a>
 
-          {/* Profile */}
-          {user && (
-            <a href="/profile">
-              <FaUserCircle
-                className={`w-6 h-6 ${
-                  theme === "dark" ? "text-gray-200" : "text-gray-800"
-                }`}
-              />
-            </a>
-          )}
-        </div>
+  <button
+    onClick={toggleTheme}
+    className="p-2 rounded-full bg-transparent hover:bg-amber-500/20 transition"
+    aria-label="toggle theme"
+  >
+    {theme === "dark" ? (
+      <FaSun className="text-amber-300 w-5 h-5" />
+    ) : (
+      <FaMoon className="text-amber-600 w-5 h-5" />
+    )}
+  </button>
+
+  {user && (
+    <a href="/profile">
+      <FaUserCircle
+        className={`w-6 h-6 ${
+          theme === "dark" ? "text-gray-200" : "text-gray-800"
+        }`}
+      />
+    </a>
+  )}
+</div>
+
 
         {/* Mobile Menu Button */}
         <button

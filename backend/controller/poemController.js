@@ -2,6 +2,9 @@ import Poem from "../models/Poem.js";
 import cloudinary from "../config/cloudinary.js";
 import User from "../models/User.js"
 import Language from "../models/languageModel.js";
+import Transliterate from "@sindresorhus/transliterate";
+import engToHindi from "../utils/engToHindi.js";
+
 
 // 🧠 Helper function to validate URLs
 const isValidUrl = (url) => {
@@ -1000,62 +1003,50 @@ export const getMyPoems = async (req, res) => {
 
 
 
-
-
 export const searchPoems = async (req, res) => {
   try {
-    const query = req.query.q?.trim();
-
-    if (!query) {
-      return res.json([]);
+    let q = req.query.q?.trim().toLowerCase();
+    if (!q) {
+      return res.json({ success: true, poems: [], writers: [] });
     }
 
-    const results = await Poem.aggregate([
-      // Join writer info
-      {
-        $lookup: {
-          from: "users",
-          localField: "writerId",
-          foreignField: "_id",
-          as: "writer",
-        }
-      },
+    // English normalize
+    const normalizedQ = Transliterate(q).toLowerCase();
 
-      { $unwind: "$writer" },
+    // English → Hindi conversion
+    const hindiFromEng = engToHindi(q);
 
-      // Full text search
-      {
-        $match: {
-          $text: { $search: query }
-        }
-      },
+    // all variants to search
+    const variants = [q, normalizedQ, hindiFromEng];
 
-      // Priority sorting
-      {
-        $sort: {
-          score: { $meta: "textScore" },
-          createdAt: -1
-        }
-      },
+    // poems search
+    const poems = await Poem.find({
+      $or: variants.flatMap((v) => [
+        { title: { $regex: v, $options: "i" } },
+        { content: { $regex: v, $options: "i" } },
+        { keywords: { $regex: v, $options: "i" } },
+      ]),
+    })
+      .limit(6)
+      .select("title slug image createdAt");
 
-      {
-        $project: {
-          title: 1,
-          slug: 1,
-          category: 1,
-          subcategory: 1,
-          description: 1,
-          content: 1,
-          writerName: "$writer.fullName",
-          writerPen: "$writer.penName",
-          score: { $meta: "textScore" }
-        }
-      }
-    ]);
+    // writers search
+    const writers = await User.find({
+      $or: variants.flatMap((v) => [
+        { fullName: { $regex: v, $options: "i" } },
+        { penName: { $regex: v, $options: "i" } },
+      ]),
+    })
+      .limit(6)
+      .select("fullName penName avatar");
 
-    res.json(results);
+    return res.json({
+      success: true,
+      poems,
+      writers,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Search failed" });
+    console.log("SEARCH ERROR:", error);
+    res.status(500).json({ success: false, message: "Search failed" });
   }
 };

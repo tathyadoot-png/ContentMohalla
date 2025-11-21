@@ -5,7 +5,11 @@ const poemSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
     slug: { type: String, unique: true, trim: true, lowercase: true },
-    writerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    writerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     category: { type: String, enum: ["Gadhya", "Kavya"], required: true },
     subcategory: { type: String, required: true },
     content: { type: String, required: true },
@@ -23,8 +27,8 @@ const poemSchema = new mongoose.Schema(
     },
     videoLink: { type: String, default: "", trim: true },
     date: { type: Date, default: Date.now },
-   // 🟢 CONNECTED LANGUAGE FIELD
- languages: [
+    // 🟢 CONNECTED LANGUAGE FIELD
+    languages: [
       {
         mainLanguage: { type: String, required: true },
         subLanguageName: { type: String, required: true },
@@ -33,37 +37,48 @@ const poemSchema = new mongoose.Schema(
 
     // 🔖 Bookmarks
     bookmarks: [
-      { userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, date: { type: Date, default: Date.now } },
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        date: { type: Date, default: Date.now },
+      },
     ],
     bookmarkCount: { type: Number, default: 0 },
 
     // 💬 Comments
     // 💬 Comments
-// 💬 Comments section
-comments: [
-  {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    username: { type: String, required: true }, // comment karne wale ka naam dikhane ke liye
-    commentText: { type: String, required: true },
-    date: { type: Date, default: Date.now },
-  },
-],
-likes: [
-  {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    date: { type: Date, default: Date.now },
-  },
-],
-likeCount: {
-  type: Number,
-  default: 0,
-},
+    // 💬 Comments section
+    comments: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        username: { type: String, required: true }, // comment karne wale ka naam dikhane ke liye
+        commentText: { type: String, required: true },
+        date: { type: Date, default: Date.now },
+      },
+    ],
+    likes: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        date: { type: Date, default: Date.now },
+      },
+    ],
+    likeCount: {
+      type: Number,
+      default: 0,
+    },
     commentCount: { type: Number, default: 0 },
 
     // 🔗 Shares
     shareCount: { type: Number, default: 0 },
 
-    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
     isAdminPost: { type: Boolean, default: false },
   },
   { timestamps: true }
@@ -88,7 +103,6 @@ poemSchema.pre("save", function (next) {
   this.commentCount = this.comments.length;
   next();
 });
-
 
 // ⭐ FULL TEXT INDEX (everything you want to search)
 poemSchema.index(
