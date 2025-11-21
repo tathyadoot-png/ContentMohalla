@@ -19,7 +19,7 @@ const navItems = [
   { name: "Home", path: "/", icon: FaBookOpen },
   { name: "गद्य", path: "/gadhya", icon: FaFeatherAlt },
   { name: "काव्य", path: "/kavya", icon: FaFeatherAlt },
-  { name: "भाषाएँ", path: "/languages", icon: FaGlobeAsia },
+  { name: "बोली", path: "/languages", icon: FaGlobeAsia },
   { name: "ऑडियो", path: "/audio", icon: FaHeadphones },
   { name: "संपर्क", path: "/contact", icon: FaEnvelope },
 ];
