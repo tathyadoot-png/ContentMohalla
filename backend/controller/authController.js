@@ -166,3 +166,11 @@ export const logoutUser = (req, res) => {
 };
 
 
+export const getLoggedInUser = (req, res) => {
+  if (!req.user) return res.json({ success: false });
+
+  res.json({
+    success: true,
+    user: req.user,
+  });
+};

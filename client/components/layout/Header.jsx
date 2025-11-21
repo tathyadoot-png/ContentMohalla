@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import {
   FaBookOpen,
@@ -24,15 +25,36 @@ const navItems = [
 
 export default function Header({ theme, toggleTheme }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
 
+  // ✅ COOKIE-BASED LOGIN DETECT
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("token"));
+    const checkUser = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
+          { credentials: "include" }
+        );
+
+        const data = await res.json();
+        if (data?.success) setUser(data.user);
+        else setUser(null);
+      } catch (error) {
+        setUser(null);
+      }
+    };
+
+    checkUser();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
+  // ✅ LOGOUT → COOKIE REMOVE
+  const handleLogout = async () => {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    setUser(null);
     window.location.href = "/login";
   };
 
@@ -82,9 +104,9 @@ export default function Header({ theme, toggleTheme }) {
           ))}
         </nav>
 
-        {/* RIGHT */}
+        {/* RIGHT SECTION */}
         <div className="hidden md:flex items-center gap-4">
-          {isLoggedIn ? (
+          {user ? (
             <button
               onClick={handleLogout}
               className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-1 rounded-full font-semibold transition"
@@ -125,13 +147,15 @@ export default function Header({ theme, toggleTheme }) {
           </button>
 
           {/* Profile */}
-          <a href="/profile">
-            <FaUserCircle
-              className={`w-6 h-6 ${
-                theme === "dark" ? "text-gray-200" : "text-gray-800"
-              }`}
-            />
-          </a>
+          {user && (
+            <a href="/profile">
+              <FaUserCircle
+                className={`w-6 h-6 ${
+                  theme === "dark" ? "text-gray-200" : "text-gray-800"
+                }`}
+              />
+            </a>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -143,11 +167,13 @@ export default function Header({ theme, toggleTheme }) {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* MOBILE MENU */}
       {isOpen && (
         <div
           className={`md:hidden flex flex-col items-center py-5 space-y-3 transition-all ${
-            theme === "dark" ? "bg-gray-900 text-gray-100" : "bg-white text-gray-800"
+            theme === "dark"
+              ? "bg-gray-900 text-gray-100"
+              : "bg-white text-gray-800"
           }`}
         >
           {navItems.map((i) => (
@@ -162,7 +188,7 @@ export default function Header({ theme, toggleTheme }) {
           ))}
 
           <div className="pt-3 flex gap-3">
-            {isLoggedIn ? (
+            {user ? (
               <button
                 onClick={handleLogout}
                 className="bg-amber-500 text-black px-4 py-1 rounded-full hover:bg-amber-400 transition"
@@ -177,6 +203,7 @@ export default function Header({ theme, toggleTheme }) {
                 Login
               </a>
             )}
+
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full bg-amber-500/20 text-amber-400"

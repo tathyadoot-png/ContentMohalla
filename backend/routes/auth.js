@@ -1,6 +1,7 @@
 import express from "express";
 import upload from "../config/multer.js";
-import { registerUser, loginUser, logoutUser } from "../controller/authController.js";
+import { registerUser, loginUser, logoutUser, getLoggedInUser } from "../controller/authController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.post("/login", (req, res, next) => {
 }, loginUser);
 
 router.post("/logout", logoutUser);
+router.get("/me", protect, getLoggedInUser);
 
 
 export default router;

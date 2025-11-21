@@ -40,7 +40,9 @@ export default function PoetrySiteLogin() {
 
       if (!res.ok) throw new Error(data.message || "Login failed");
 
-      // Save token to localStorage
+     // token cookies me aa rahi hai because credentials: "include"
+console.log("Logged in via cookies");
+
    
       setSuccess("लॉगिन सफल हुआ! स्वागत है।");
 
