@@ -1,57 +1,80 @@
+// components/admin/DashboardStats.jsx
 "use client";
 import React, { useEffect, useState } from "react";
-import { FiUsers, FiFileText, FiBookmark, FiHeart, FiTag, FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi";
-
-const StatCard = ({ label, value, icon: Icon, bgGradient = "from-amber-100 to-amber-50", subtle }) => (
-  <div className={`rounded-xl shadow-lg p-4 flex items-center gap-4 transition hover:scale-[1.02] transform ${subtle ? "bg-white/80" : ""}`} style={{ background: `linear-gradient(135deg, var(--tw-gradient-stops))` }}>
-    <div className={`p-3 rounded-lg text-white flex items-center justify-center`} style={{ background: null }}>
-      <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{
-        background: `linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))`,
-        boxShadow: "inset 0 -6px 18px rgba(0,0,0,0.06)"
-      }}>
-        <Icon className="text-2xl" />
-      </div>
-    </div>
-
-    <div className="flex-1">
-      <div className="text-xs text-gray-400 uppercase tracking-wide">{label}</div>
-      <div className="mt-1 text-2xl font-extrabold text-gray-900">{value}</div>
-    </div>
-  </div>
-);
+import Cookies from "js-cookie";
+import {
+  FiUsers,
+  FiFileText,
+  FiBookmark,
+  FiHeart,
+  FiCheckCircle,
+  FiClock,
+  FiXCircle,
+} from "react-icons/fi";
 
 export default function DashboardStats({ apiBase = "" }) {
-  const API_BASE = apiBase || process.env.NEXT_PUBLIC_API_URL || "";
+  const API_BASE = (apiBase || process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
   useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
     const load = async () => {
       setLoading(true);
+      setErr("");
       try {
+        // Read admin token from cookie (change key if yours is different)
+        const adminToken = Cookies.get("adminToken");
+        if (!adminToken) {
+          throw new Error("Admin token not found. Please login as admin.");
+        }
+
         const res = await fetch(`${API_BASE}/api/admin/stats`, {
           method: "GET",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+          },
         });
+
+        // safe parse body
+        const text = await res.text().catch(() => "");
+        let body = {};
+        try {
+          body = text ? JSON.parse(text) : {};
+        } catch (e) {
+          body = { message: text };
+        }
+
         if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
+          // give more helpful messages for common statuses
+          if (res.status === 401 || res.status === 403) {
+            throw new Error(body.message || "Unauthorized. Token may be invalid or expired.");
+          }
           throw new Error(body.message || `Fetch failed: ${res.status}`);
         }
-        const body = await res.json();
+
         if (!mounted) return;
         setStats(body.data || null);
       } catch (e) {
+        if (!mounted) return;
+        if (e.name === "AbortError") return;
         console.error("DashboardStats fetch error:", e);
-        if (mounted) setErr(e.message || "Failed to load");
+        setErr(e.message || "Failed to load stats");
       } finally {
         if (mounted) setLoading(false);
       }
     };
+
     load();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
   }, [API_BASE]);
 
   if (loading) return <div className="p-6">Loading stats...</div>;
