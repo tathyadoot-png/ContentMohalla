@@ -1,6 +1,6 @@
 import express from "express";
 import { authorizeRoles, protect, verifyToken } from "../middleware/authMiddleware.js";
-import { getAllUsers, getUserById, getUserProfile, updateUserProfile } from "../controller/userController.js";
+import { adminListUsers, getAllUsers, getUserById, getUserProfile, updateUserProfile } from "../controller/userController.js";
 import upload from "../config/multer.js";
 
 const router = express.Router();
@@ -14,7 +14,10 @@ router.put("/update", protect, upload.single("avatar"), updateUserProfile);
 
 
 // routes/userRoutes.js (or admin route)
-router.get("/", protect, authorizeRoles("admin"), getAllUsers); // returns id + fullName + penName
+router.get("/", protect, authorizeRoles("admin"), adminListUsers); 
+// router.get("/", protect, authorizeRoles("admin"), getAllUsers); 
+
+
 
 router.get("/:id", protect, authorizeRoles("admin"), getUserById);
 
