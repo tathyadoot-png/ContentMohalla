@@ -262,22 +262,31 @@ export const updatePoemStatus = async (req, res) => {
 
 import mongoose from "mongoose";
 
+
 export const getPoemsByCategory = async (req, res) => {
   try {
     const { category, subcategory } = req.params;
 
-    // 🔥 FIXED Hindi language ObjectId
+    // your known Hindi language ObjectId (adjust if different)
     const HINDI_LANGUAGE_ID = new mongoose.Types.ObjectId("6912fd5c34b9b95a0133ab74");
+    const HINDI_LANGUAGE_ID_STR = HINDI_LANGUAGE_ID.toString();
 
     const poems = await Poem.find({
       category: { $regex: new RegExp(category, "i") },
       subcategory: { $regex: new RegExp(subcategory, "i") },
       status: "approved",
 
-      // 🔥 Always filter by Hindi
+      // match if languages array has mainLanguage equal to:
+      // 1) the ObjectId, OR
+      // 2) the ObjectId stored as string, OR
+      // 3) the literal string "Hindi"
       languages: {
         $elemMatch: {
-          mainLanguage: HINDI_LANGUAGE_ID
+          $or: [
+            { mainLanguage: HINDI_LANGUAGE_ID },
+            { mainLanguage: HINDI_LANGUAGE_ID_STR },
+            { mainLanguage: "Hindi" }
+          ]
         }
       }
     })
@@ -296,8 +305,6 @@ export const getPoemsByCategory = async (req, res) => {
     res.status(500).json({ message: "Error fetching poems" });
   }
 };
-
-
 
 
 export const getPoemById = async (req, res) => {
