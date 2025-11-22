@@ -1,5 +1,7 @@
 "use client";
-import React, { useState, useContext } from "react";
+
+
+import React, { useState, useContext, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -23,6 +25,7 @@ const Sidebar = () => {
     { name: "Admin Pending Posts", href: "/dashboard/adminPendingPosts", icon: ListChecks },
     { name: "Languages", href: "/dashboard/poemLanguages", icon: Users },
     { name: "Users", href: "/dashboard/users", icon: Users },
+    { name: "AddUsers", href: "/dashboard/addUser", icon: Users },
   ];
 
   return (

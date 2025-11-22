@@ -1,3 +1,6 @@
+// changes: make email optional and remove `required: true`
+// rest remains same
+
 import mongoose from "mongoose";
 
 const socialLinksSchema = new mongoose.Schema({
@@ -15,7 +18,8 @@ const userSchema = new mongoose.Schema(
     // Basic Info
     fullName: { type: String, required: true, trim: true },
     penName: { type: String, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true },
+    // email is now optional (remove required)
+    email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
     password: { type: String, required: true },
     phone: { type: String, default: "" },
 
@@ -36,7 +40,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       default: () => {
-        // Generate random 8-digit number as string
         return Math.floor(10000000 + Math.random() * 90000000).toString();
       },
     },
@@ -55,7 +58,6 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-
 userSchema.index(
   {
     fullName: "text",
@@ -67,6 +69,5 @@ userSchema.index(
     language_override: "none",
   }
 );
-
 
 export default mongoose.model("User", userSchema);
