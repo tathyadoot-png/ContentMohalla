@@ -1,6 +1,7 @@
 import express from "express";
 import upload from "../config/multer.js";
 import Poem from "../models/Poem.js";
+import User from "../models/User.js";
 import cloudinary from "../config/cloudinary.js";
 import { protect, authorizeRoles, optionalAuth } from "../middleware/authMiddleware.js";
 import {
@@ -80,8 +81,7 @@ router.get(
   getPoemsByStatus
 );
 
-// 📝 Update poem details (Admin Edit)
-// PUT /admin/update/:id
+// inside your poems router (PUT /admin/update/:id)
 router.put(
   "/admin/update/:id",
   protect,
@@ -96,13 +96,33 @@ router.put(
       const poem = await Poem.findById(req.params.id);
       if (!poem) return res.status(404).json({ message: "Poem not found" });
 
-      // Update simple text fields (only if provided)
+      // ------------------- ownership change via uniqueId -------------------
+      if (req.body.userUniqueId && String(req.body.userUniqueId).trim() !== "") {
+        const newUnique = String(req.body.userUniqueId).trim();
+        const newOwner = await User.findOne({ uniqueId: newUnique });
+        if (!newOwner) {
+          // fail fast so admin knows the uniqueId is invalid
+          return res.status(404).json({ message: `User with Unique ID ${newUnique} not found` });
+        }
+
+        // change only if different
+        const currentWriterId = poem.writerId ? String(poem.writerId) : null;
+        if (!currentWriterId || currentWriterId !== String(newOwner._id)) {
+          poem.writerId = newOwner._id;
+          // optional: maintain postsCount on users if you have that field
+          // (update previous owner and new owner counts here)
+        }
+      }
+      // --------------------------------------------------------------------
+
+      // Update other fields as you already do
       poem.title = req.body.title ?? poem.title;
       poem.content = req.body.content ?? poem.content;
       poem.category = req.body.category ?? poem.category;
       poem.subcategory = req.body.subcategory ?? poem.subcategory;
       poem.date = req.body.date ?? poem.date;
-      // languages (if provided)
+
+      // languages
       if (req.body.languages) {
         try {
           const parsed = JSON.parse(req.body.languages);
@@ -118,45 +138,32 @@ router.put(
       }
 
       const files = req.files || {};
-
-      // If new image uploaded -> upload to Cloudinary and set object
+      // handle files (image/audio/video) same as you already have (upload to Cloudinary etc.)
       if (files.image && files.image[0]) {
         const img = files.image[0];
-        // depending on multer config you might need img.path or img.buffer
-        const uploadRes = await cloudinary.uploader.upload(img.path, {
-          folder: "contentmohalla/images",
-        });
+        const uploadRes = await cloudinary.uploader.upload(img.path, { folder: "contentmohalla/images" });
         poem.image = { url: uploadRes.secure_url, public_id: uploadRes.public_id };
       }
-
-      // Audio (resource_type: "video" often used for non-image)
       if (files.audio && files.audio[0]) {
         const aud = files.audio[0];
-        const uploadRes = await cloudinary.uploader.upload(aud.path, {
-          folder: "contentmohalla/audios",
-          resource_type: "video",
-        });
+        const uploadRes = await cloudinary.uploader.upload(aud.path, { folder: "contentmohalla/audios", resource_type: "video" });
         poem.audio = { url: uploadRes.secure_url, public_id: uploadRes.public_id };
       }
-
-      // Video
       if (files.video && files.video[0]) {
         const vid = files.video[0];
-        const uploadRes = await cloudinary.uploader.upload(vid.path, {
-          folder: "contentmohalla/videos",
-          resource_type: "video",
-        });
+        const uploadRes = await cloudinary.uploader.upload(vid.path, { folder: "contentmohalla/videos", resource_type: "video" });
         poem.video = { url: uploadRes.secure_url, public_id: uploadRes.public_id };
       }
 
       await poem.save();
-      res.json({ message: "Poem updated successfully", poem });
+      return res.json({ message: "Poem updated successfully", poem });
     } catch (error) {
       console.error("Update Error:", error);
-      res.status(500).json({ message: "Server error", error: error.message });
+      return res.status(500).json({ message: "Server error", error: error.message });
     }
   }
 );
+
 
 
 // GET /poems/sections/most-liked?limit=8

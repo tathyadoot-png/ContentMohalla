@@ -265,7 +265,7 @@ export default function AdminPostForm({ poemId = null, poemData = null, onUpdate
         {onClose && <button onClick={onClose} className="text-gray-500 hover:text-red-600">✕</button>}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <input type="text" name="title" placeholder="Enter Title" value={formData.title} onChange={handleChange} className="w-full border p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B83D43]" required />
 
         <div>
