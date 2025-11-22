@@ -19,6 +19,7 @@ import {
   getPoemsByCategory,
   getPoemsByStatus,
   getPoemsExcludingHindi,
+  getPoemsWithAudio,
   getRelatedPoems,
   getTopPoems,
   getTrending,
@@ -59,6 +60,10 @@ router.put("/:id/status", protect, authorizeRoles("admin"), updatePoemStatus);
 router.get("/category/:category/:subcategory", getPoemsByCategory);
 
 router.get("/my-poems", protect, getMyPoems);
+
+// GET /api/poems/sections/with-audio?page=1&limit=12&search=term
+router.get("/sections/with-audio", getPoemsWithAudio);
+
 
 router.get("/search", searchPoems);
 

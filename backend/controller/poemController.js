@@ -1050,3 +1050,80 @@ export const searchPoems = async (req, res) => {
     res.status(500).json({ success: false, message: "Search failed" });
   }
 };
+
+
+
+// controllers/poemController.js
+export const getPoemsWithAudio = async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit, 10) || 12);
+    const skip = (page - 1) * limit;
+    const search = (req.query.search || "").trim();
+
+    // base filter: audio.url exists and not empty, only approved poems
+    const filter = {
+      "audio.url": { $exists: true, $ne: "" },
+      status: "approved",
+    };
+
+    // optional search on title/content
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { content: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const total = await Poem.countDocuments(filter);
+
+    // fetch poems, include writer info
+    // NOTE: include category & subcategory in .select so frontend receives them
+    const docs = await Poem.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("writerId", "fullName penName avatar uniqueId")
+      .select("title content audio likeCount bookmarkCount languages slug createdAt writerId category subcategory")
+      .lean();
+
+    // shape result for frontend
+   // shape result for frontend
+const poems = docs.map((p) => {
+  const writer = p.writerId || null;
+  const subLanguageName =
+    Array.isArray(p.languages) && p.languages.length > 0 ? p.languages[0].subLanguageName || null : null;
+
+  return {
+    id: p._id,
+    title: p.title,
+    content: p.content,
+    slug: p.slug,
+    audio: p.audio || { url: "", public_id: "" },
+    likeCount: p.likeCount ?? 0,
+    bookmarkCount: p.bookmarkCount ?? 0,
+    subLanguageName,
+    // provide writer as flat fields for frontend convenience
+    writerId: writer ? writer._id : null,
+    writerName: writer ? (writer.penName || writer.fullName || null) : null,
+    writerAvatar: writer ? (writer.avatar || "") : "",
+    createdAt: p.createdAt,
+    category: p.category || "",
+    subcategory: p.subcategory || "",
+  };
+});
+
+
+    return res.status(200).json({
+      success: true,
+      total,
+      page,
+      limit,
+      poems,
+    });
+  } catch (err) {
+    console.error("getPoemsWithAudio error:", err);
+    return res.status(500).json({ success: false, message: "Server error fetching audio poems" });
+  }
+};
+
