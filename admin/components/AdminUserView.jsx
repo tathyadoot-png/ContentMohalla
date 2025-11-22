@@ -1,6 +1,7 @@
 // components/admin/AdminUsersList.jsx
 "use client";
 import React, { useEffect, useState, useRef } from "react";
+import Cookies from "js-cookie";
 import { FiSearch, FiEye, FiX } from "react-icons/fi";
 
 const ACCENT = "text-[#B83D43]";
@@ -57,23 +58,43 @@ const AdminUsersList = ({ apiBase = "" }) => {
     setLoading(true);
     setError("");
     try {
+      const adminToken = Cookies.get("adminToken"); // <-- read token from cookie
+      if (!adminToken) {
+        setUsers([]);
+        setLoading(false);
+        setError("Admin token not found. Please login as admin.");
+        return;
+      }
+
       const params = new URLSearchParams();
       params.set("page", page);
       params.set("limit", limit);
       if (query) params.set("search", query);
 
-      const res = await fetch(`${API_BASE}/api/admin/users?${params.toString()}`, {
+      const url = `${API_BASE.replace(/\/$/, "")}/api/admin/users?${params.toString()}`;
+
+      const res = await fetch(url, {
         method: "GET",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
       });
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || `Fetch failed: ${res.status}`);
+      // attempt to read JSON body safely
+      const text = await res.text().catch(() => "");
+      let body = {};
+      try {
+        body = text ? JSON.parse(text) : {};
+      } catch (e) {
+        body = { message: text };
       }
 
-      const body = await res.json();
+      if (!res.ok) {
+        throw new Error(body?.message || `Fetch failed: ${res.status}`);
+      }
+
       const fetched = body.users || [];
       // ensure newest users appear on top
       const sorted = sortNewestFirst(fetched);
@@ -96,6 +117,7 @@ const AdminUsersList = ({ apiBase = "" }) => {
 
   // refetch when query changes (search)
   useEffect(() => {
+    // reset to first page when new query applied
     fetchUsers(1, meta.limit, q);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
@@ -169,7 +191,7 @@ const AdminUsersList = ({ apiBase = "" }) => {
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u._id} className="border-b last:border-b-0 hover:bg-gray-50">
+                  <tr key={u._id || u.uniqueId} className="border-b last:border-b-0 hover:bg-gray-50">
                     <td className="px-3 py-3 flex items-center gap-3 min-w-[200px]">
                       <div className={`w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border ${u.isNew ? "ring-2 ring-[#FAD0D0]" : ""}`}>
                         {u.avatar ? (
