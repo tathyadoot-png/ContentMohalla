@@ -182,7 +182,7 @@ export const getAllPoems = async (req, res) => {
 export const getPoemBySlug = async (req, res) => {
   try {
     const poem = await Poem.findOne({ slug: req.params.slug })
-      .populate("writerId", "fullName penName") // ✅ keep only this for writer
+      .populate("writerId", "fullName penName avatar") // ✅ keep only this for writer
       .populate("comments.userId", "fullName avatar"); // ✅ added to show user image & name in comments
 
     if (!poem) {

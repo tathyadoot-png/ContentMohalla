@@ -238,8 +238,8 @@ const buildPostHref = (slide) => {
             </div>
 
             <div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">Our Best Poems of This Week</h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Handpicked — सबसे बेहतरीन रचनाएँ</p>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">इस हफ़्ते की पसंदीदा रचनाएँ</h2>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">सबसे बेहतरीन रचनाएँ</p>
             </div>
           </div>
         </div>
@@ -257,8 +257,8 @@ const buildPostHref = (slide) => {
     return (
       <div className={`gadhy-kavya-accordion ${className}`}>
         <div className="w-[96%] lg:w-[88%] mx-auto mb-4">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">Our Best Poems of This Week</h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Handpicked — सबसे बेहतरीन रचनाएँ</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">इस हफ़्ते की पसंदीदा रचनाएँ</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">सबसे बेहतरीन रचनाएँ</p>
         </div>
 
         <div className="rounded-2xl overflow-hidden">
@@ -278,8 +278,8 @@ const buildPostHref = (slide) => {
     return (
       <div className={`gadhy-kavya-accordion ${className}`}>
         <div className="w-[96%] lg:w-[88%] mx-auto mb-4">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">Our Best Poems of This Week</h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Handpicked — सबसे बेहतरीन रचनाएँ</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">इस हफ़्ते की पसंदीदा रचनाएँ</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">सबसे बेहतरीन रचनाएँ</p>
         </div>
 
         <div className="rounded-2xl overflow-hidden">
@@ -310,8 +310,8 @@ const buildPostHref = (slide) => {
           </div>
 
           <div>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">Our Best Poems of This Week</h2>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Handpicked — सबसे बेहतरीन रचनाएँ</p>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">इस हफ़्ते की पसंदीदा रचनाएँ</h2>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">सबसे बेहतरीन रचनाएँ</p>
           </div>
         </div>
       </div>

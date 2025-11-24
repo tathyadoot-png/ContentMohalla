@@ -1,25 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import Cookies from "js-cookie";
 import {
   FaHeart,
   FaRegHeart,
   FaBookmark,
   FaRegBookmark,
-  FaPaperPlane,
-  FaUserCircle,
-  FaThumbsUp,
   FaShareAlt,
-  FaCommentAlt,
+  FaUserCircle,
+  FaPaperPlane,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
-import RelatedGadhya from "../../../../components/content/RelatedPoems";
+import RelatedGadhya from "../../../../components/content/RelatedPoems"; // adjust if path differs
+
+// helper to format counts like 1.4K
+const formatCount = (num) => {
+  if (!num && num !== 0) return 0;
+  if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+  return num;
+};
 
 export default function GadhyaPostPage() {
-  const { vidhaSlug, postSlug } = useParams();
+  const { vidhaSlug, postSlug } = useParams(); // route params
+  const router = useRouter();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -27,27 +34,39 @@ export default function GadhyaPostPage() {
   const [bookmarked, setBookmarked] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const token = Cookies.get("token");
+
   useEffect(() => {
+    if (!postSlug) return;
     const fetchPost = async () => {
+      setLoading(true);
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/poems/slug/${postSlug}`,
-          { cache: "no-store", credentials: "include" }
+          {
+            cache: "no-store",
+            credentials: "include",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }
         );
         const data = await res.json();
-        setPost(data.poem || data);
-        setComments(data.poem?.comments || data.comments || []);
-        setLiked(data.userLiked || false);
-        setBookmarked(data.userBookmarked || false);
-      } catch (error) {
-        console.error("Error fetching post:", error);
+        const fetched = data.poem || data;
+        setPost(fetched);
+        setComments(fetched?.comments || data.comments || []);
+        setLiked(data.userLiked ?? false);
+        setBookmarked(data.userBookmarked ?? false);
+      } catch (err) {
+        console.error("Error fetching gadhya post:", err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchPost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postSlug]);
 
+  // Like toggling
   const handleLike = async () => {
     if (!post?._id) return;
     try {
@@ -56,16 +75,33 @@ export default function GadhyaPostPage() {
         {
           method: "POST",
           credentials: "include",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
       );
-      if (res.status === 401) return alert("कृपया पहले लॉगिन करें!");
+      if (res.status === 401) {
+        alert("कृपया लॉगिन करें!");
+        return;
+      }
       const data = await res.json();
-      if (data.success) setLiked(data.isLiked);
-    } catch (error) {
-      console.error("Like error:", error);
+      if (data.success) {
+        setLiked(data.isLiked);
+        // update local counts if returned
+        if (data.likesCount !== undefined) {
+          setPost((p) => ({ ...p, likeCount: data.likesCount }));
+        } else {
+          // optimistic adjust
+          setPost((p) => ({
+            ...p,
+            likeCount: p?.likeCount ? (data.isLiked ? p.likeCount + 1 : p.likeCount - 1) : p.likeCount,
+          }));
+        }
+      }
+    } catch (err) {
+      console.error("Like error:", err);
     }
   };
 
+  // Bookmark toggling
   const handleBookmark = async () => {
     if (!post?._id) return;
     try {
@@ -74,79 +110,104 @@ export default function GadhyaPostPage() {
         {
           method: "POST",
           credentials: "include",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
       );
-      if (res.status === 401) return alert("कृपया पहले लॉगिन करें!");
+      if (res.status === 401) {
+        alert("कृपया लॉगिन करें!");
+        return;
+      }
       const data = await res.json();
-      if (data.success) setBookmarked(!bookmarked);
-    } catch (error) {
-      console.error("Bookmark error:", error);
+      if (data.success) {
+        setBookmarked(data.isBookmarked ?? !bookmarked);
+        if (data.bookmarksCount !== undefined) {
+          setPost((p) => ({ ...p, bookmarksCount: data.bookmarksCount }));
+        }
+      }
+    } catch (err) {
+      console.error("Bookmark error:", err);
     }
   };
 
+  // Add comment
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     if (!post?._id) return;
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/poems/${post._id}/comment`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ commentText: newComment }),
           credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({ commentText: newComment }),
         }
       );
-      if (res.status === 401) return alert("कृपया पहले लॉगिन करें!");
+
+      if (res.status === 401) {
+        alert("कृपया लॉगिन करें!");
+        return;
+      }
+
       const data = await res.json();
       if (data.success) {
         setComments(data.comments || []);
         setNewComment("");
       }
-    } catch (error) {
-      console.error("Add comment error:", error);
+    } catch (err) {
+      console.error("Comment error:", err);
     }
   };
 
+  // Share (navigator.share fallback to clipboard)
   const handleShare = async () => {
     const shareUrl = window.location.href;
     try {
       if (navigator.share) {
         await navigator.share({
-          title: post.title,
-          text: "इस गद्य रचना को पढ़ें!",
+          title: post?.title || "यह लेख पढ़ें",
+          text: "यह लेख पढ़ें",
           url: shareUrl,
         });
       } else {
-        navigator.clipboard.writeText(shareUrl);
-        alert("🔗 लिंक कॉपी हो गया!");
+        await navigator.clipboard.writeText(shareUrl);
+        alert("लिंक कॉपी हो गया!");
       }
-    } catch (error) {
-      navigator.clipboard.writeText(shareUrl);
-      alert("🔗 लिंक कॉपी हो गया!");
+    } catch {
+      await navigator.clipboard.writeText(shareUrl);
+      alert("लिंक कॉपी हो गया!");
     }
   };
 
   if (loading)
-    return <p className="text-center py-10 text-gray-500">Loading...</p>;
+    return <p className="text-center py-10 text-gray-500">लोड हो रहा है...</p>;
 
   if (!post)
-    return <p className="text-center py-10 text-red-500">Post not found</p>;
+    return <p className="text-center py-10 text-red-500">पोस्ट नहीं मिली।</p>;
+
+  // helper to safely access writer object (some apis return writerId or writer)
+  const writer = post.writer || post.writerId || post.author || null;
+  const writerId = writer?._id || writer?.id;
 
   return (
-    <main className="min-h-screen py-4 px-4 bg-white font-serif">
+    <main className="min-h-screen pt-4 pb-12 px-4 bg-white font-serif">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* LEFT / MAIN */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Updated image wrapper: object-contain to avoid cropping */}
+          {/* IMAGE */}
           {post.image?.url && (
-            <div className="relative w-full overflow-hidden rounded-xl shadow-lg bg-gray-50 flex items-center justify-center"
-                 style={{ aspectRatio: "16 / 9" }}>
-              {/* Use Image with fill + objectFit: 'contain' so image never crops */}
+            <div
+              className="relative w-full overflow-hidden rounded-xl shadow-lg bg-gray-50 flex items-center justify-center"
+              style={{ aspectRatio: "16 / 9" }}
+            >
               <Image
                 src={post.image.url}
-                alt={post.title || "Gadhya Image"}
+                alt={post.title || "Image"}
                 fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 66vw, 1200px"
                 style={{ objectFit: "contain" }}
                 className="transition-transform duration-300 group-hover:scale-105"
                 priority
@@ -154,140 +215,167 @@ export default function GadhyaPostPage() {
             </div>
           )}
 
+          {/* TITLE + META */}
           <div className="pt-4 px-2">
             <h1 className="text-4xl font-extrabold text-[#1f2937] mb-2">
               {post.title}
             </h1>
 
-            <p className="text-sm text-gray-500 mb-6">
-              द्वारा <strong>{post.writerId?.penName || post.writerId?.fullName || "अज्ञात"}</strong> |
-              {" "}
-              {new Date(post.createdAt || new Date()).toLocaleDateString("hi-IN", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
+            <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+              <Link
+                href={writerId ? `/writer/${writerId}` : "#"}
+                className="flex items-center gap-3 cursor-pointer group"
+              >
+                {writer?.avatar ? (
+                  <Image
+                    src={writer.avatar}
+                    width={48}
+                    height={48}
+                    alt={writer?.fullName || writer?.penName || "Writer"}
+                    className="rounded-full shadow-md w-12 h-12 object-cover border border-gray-100"
+                  />
+                ) : (
+                  <FaUserCircle className="text-gray-400 text-4xl" />
+                )}
 
-            <p className="text-base text-gray-600 border-l-4 border-gray-200 pl-4 italic mb-8">
-              यह गद्य रचना आपको विषय के बारे में गहन जानकारी प्रदान करती है।
-              लेखक ने यहाँ विचारों और भावनाओं का एक शानदार मिश्रण प्रस्तुत किया है।
-            </p>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 group-hover:text-[#7a1c10] transition">
+                    {writer?.penName || writer?.fullName || "लेखक"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(post.createdAt || Date.now()).toLocaleDateString("hi-IN", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                    {" • "} {post.deskLocation || ""}
+                  </p>
+                </div>
+              </Link>
 
+             
+            </div>
+
+            {/* CONTENT */}
             <div
               className="text-[#3f3f46] text-xl leading-8 whitespace-pre-wrap font-medium"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
 
+            {/* AUDIO (if available) */}
+            {post.audioUrl || post.audio?.url ? (
+              <div className="mt-6 bg-gray-100 p-4 rounded-xl">
+                <audio controls className="w-full">
+                  <source src={post.audioUrl ?? post.audio.url} />
+                  आपका ब्राउज़र ऑडियो टैग सपोर्ट नहीं करता।
+                </audio>
+              </div>
+            ) : null}
+
+            {/* VIDEO LINK */}
             {post.videoLink && (
-              <div className="flex justify-start mt-8">
-                <a
-                  href={post.videoLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#7a1c10] hover:bg-[#a12717] text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-md transition-all duration-300"
-                >
-                  ▶ वीडियो देखें
-                </a>
+              <a
+                href={post.videoLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 bg-[#7a1c10] hover:bg-[#a12717] text-white px-5 py-2.5 rounded-full mt-6"
+              >
+                ▶ वीडियो देखें
+              </a>
+            )}
+
+            {/* TAGS (if exist) */}
+            {Array.isArray(post.tags) && post.tags.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {post.tags.map((t) => (
+                  <span key={t} className="text-xs px-3 py-1 rounded-full border bg-white/60">
+                    #{t}
+                  </span>
+                ))}
               </div>
             )}
           </div>
 
-          <div className="flex items-center justify-between border-t border-b py-4 px-2 text-gray-500 text-sm">
-            <div className="flex items-center gap-4">
+          {/* ACTION BAR */}
+          <div className="flex items-center justify-between border-t border-b py-4 px-2 text-gray-600 text-sm">
+            <div className="flex items-center gap-6">
               <motion.button
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleLike}
-                className="flex items-center gap-1 hover:text-red-500 transition"
+                className="flex items-center gap-2 hover:text-red-500"
               >
-                <FaThumbsUp className={`text-lg ${liked ? "text-red-500" : ""}`} />
+                {liked ? <FaHeart className="text-lg text-red-600" /> : <FaRegHeart className="text-lg" />}
+                <span>{formatCount(post.likeCount ?? post.likes?.length ?? 0)}</span>
               </motion.button>
 
-              <div className="flex items-center gap-1">
-                {/* Comments count left as placeholder (you can enable icon if needed) */}
-              </div>
-
               <motion.button
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleShare}
-                className="flex items-center gap-1 hover:text-[#7a1c10] transition"
+                className="flex items-center gap-2 hover:text-[#7a1c10]"
               >
-                <FaShareAlt className="text-lg" />
+                <FaShareAlt />
                 <span>साझा करें</span>
               </motion.button>
             </div>
 
             <motion.button
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleBookmark}
-              className="flex items-center gap-2 text-[#7a1c10] hover:text-[#a12717] transition border border-[#7a1c10] px-4 py-1.5 rounded-full"
+              className="flex items-center gap-2 border border-[#7a1c10] text-[#7a1c10] hover:text-[#a12717] hover:border-[#a12717] px-4 py-1.5 rounded-full"
             >
-              {bookmarked ? <FaBookmark className="text-sm" /> : <FaRegBookmark className="text-sm" />}
-              <span>सहेजें</span>
+              {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+              <span>{formatCount(post.bookmarksCount ?? post.bookmarks?.length ?? 0)}</span>
             </motion.button>
           </div>
 
+          {/* COMMENTS */}
           <div className="p-2 space-y-6">
-            <h2 className="text-xl font-bold text-[#1f2937]">
-              टिप्पणियाँ ({comments?.length || 0})
-            </h2>
+            <h2 className="text-xl font-bold text-[#1f2937]">टिप्पणियाँ ({comments?.length || 0})</h2>
 
-            <div className="mb-6 border border-gray-300 rounded-lg p-4 bg-gray-50">
+            <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="अपनी टिप्पणी लिखें..."
                 rows={2}
-                className="w-full resize-none outline-none text-base bg-transparent"
+                placeholder="अपनी टिप्पणी लिखें..."
+                className="w-full bg-transparent outline-none resize-none"
               />
               <div className="flex justify-end mt-2">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleAddComment}
-                  className="bg-[#7a1c10] hover:bg-[#a12717] text-white px-5 py-2 rounded-lg text-sm font-medium flex items-center justify-center shadow-md transition disabled:opacity-50"
                   disabled={!newComment.trim()}
+                  className="bg-[#7a1c10] text-white px-5 py-2 rounded-lg mt-2"
                 >
-                  टिप्पणी भेजें <FaPaperPlane className="ml-2 text-xs" />
+                  भेजें
                 </motion.button>
               </div>
             </div>
 
-            {comments?.length > 0 ? (
+            {comments && comments.length > 0 ? (
               <div className="space-y-4">
                 {comments.map((c, i) => (
-                  <div key={i} className="flex gap-4 p-3 border-b border-gray-100 last:border-b-0">
+                  <div key={i} className="flex gap-4 border-b pb-4">
                     {c.profilePic ? (
-                      <Image
-                        src={c.profilePic}
-                        alt={c.username}
-                        width={40}
-                        height={40}
-                        className="rounded-full object-cover w-10 h-10 border border-gray-200 flex-shrink-0"
-                      />
+                      <Image src={c.profilePic} width={40} height={40} className="rounded-full" alt={c.username} />
                     ) : (
-                      <FaUserCircle className="text-gray-400 text-4xl flex-shrink-0" />
+                      <FaUserCircle className="text-gray-400 text-4xl" />
                     )}
                     <div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="font-bold text-[#1f2937]">
-                          {c.username || "User"}
-                        </span>
-                        <span className="text-gray-500 text-xs">
-                          {c.date ? new Date(c.date).toLocaleDateString("hi-IN") : "कुछ देर पहले"}
-                        </span>
-                      </div>
-                      <p className="text-gray-700 text-base mt-1 leading-snug">{c.commentText}</p>
+                      <p className="font-bold">{c.username || "User"}</p>
+                      <p className="text-gray-700">{c.commentText}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm italic text-center py-4">अभी तक कोई टिप्पणी नहीं की गई है।</p>
+              <p className="text-center text-gray-500">अभी कोई टिप्पणी नहीं।</p>
             )}
           </div>
         </div>
 
-        <div className="lg:col-span-1 pt-4 lg:pt-0">
+        {/* RIGHT / SIDEBAR */}
+        <div className="lg:col-span-1 pt-4">
           <RelatedGadhya poemId={post._id} isSidebar={true} />
         </div>
       </div>

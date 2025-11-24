@@ -133,8 +133,8 @@ const HomeSections = () => {
       <div className="space-y-16">
         <section className="pt-4">
           <SectionHeader
-            title="Most Liked"
-            subtitle="लोकप्रिय—सबसे ज़्यादा प्यार की गई रचनाएँ"
+            title="लोकप्रिय"
+            subtitle="सबसे ज़्यादा पसंद की गई रचनाएँ"
             icon={FiHeart}
           />
           <HorizontalSection
@@ -147,8 +147,8 @@ const HomeSections = () => {
 <GadhyKavyaAccordion />
         <section className="pt-4">
           <SectionHeader
-            title="Most Bookmarked"
-            subtitle="क्यूरेटेड—यूज़र ने ज़रूर सेव की हुई रचनाएँ"
+            title="सहेजी हुई रचनाएँ"
+            subtitle="पाठकों द्वारा सहेजी हुई रचनाएँ"
             icon={FiBookmark}
           />
           <HorizontalSection
@@ -162,8 +162,8 @@ const HomeSections = () => {
 
         <section className="pt-4">
           <SectionHeader
-            title="Latest"
-            subtitle="ताज़ा तरीन—हाल ही में प्रकाशित रचनाएँ"
+            title="सबसे नवीन"
+            subtitle="हाल ही में प्रकाशित रचनाएँ"
             icon={FiClock}
           />
           <HorizontalSection

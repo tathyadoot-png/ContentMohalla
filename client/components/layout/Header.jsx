@@ -14,6 +14,7 @@ import {
   FaUserCircle,
 } from "react-icons/fa";
 import SearchOverlay from "../content/SearchOverlay";
+import logo from "../../public/logo.png";
 
 const navItems = [
   { name: "Home", path: "/", icon: FaBookOpen },
@@ -69,24 +70,31 @@ export default function Header({ theme, toggleTheme }) {
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center px-5 h-16">
         {/* LOGO */}
-        <a
-          href="/"
-          className={`text-2xl font-bold flex items-center gap-2 ${
-            theme === "dark" ? "text-amber-400" : "text-gray-900"
-          }`}
-        >
-          <span className="text-3xl">✍️</span>
-          <span className="font-playfair-display">
-            Content{" "}
-            <span
-              className={`${
-                theme === "dark" ? "text-amber-300" : "text-amber-600"
-              }`}
-            >
-              Mohalla
-            </span>
-          </span>
-        </a>
+     {/* LOGO */}
+<a
+  href="/"
+  className={`text-2xl font-bold flex items-center  ${
+    theme === "dark" ? "text-amber-400" : "text-gray-900"
+  }`}
+>
+  <img
+    src={logo.src}
+    alt="Logo"
+    className="w-12 h-12 object-contain"
+  />
+
+  <span className="font-playfair-display">
+    Content{" "}
+    <span
+      className={`${
+        theme === "dark" ? "text-amber-300" : "text-amber-600"
+      }`}
+    >
+      Mohalla
+    </span>
+  </span>
+</a>
+
 
         {/* NAV */}
         <nav className="hidden md:flex gap-8 items-center">

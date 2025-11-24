@@ -11,14 +11,20 @@ import {
   FaRegBookmark,
   FaPaperPlane,
   FaUserCircle,
-  FaThumbsUp, // Using FaThumbsUp for Like Count icon as seen in SS
-  FaShareAlt, // Using a standard Share icon
+  FaThumbsUp,
+  FaShareAlt,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import RelatedPoems from "../../../../components/content/RelatedPoems";
 import Cookies from "js-cookie";
 
-// 🎨 SS Matched UI Component
+// 🔢 Format 1.4K numbers
+const formatCount = (num) => {
+  if (!num) return 0;
+  if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+  return num;
+};
+
 export default function KavyaPostPage() {
   const { rasSlug, postSlug } = useParams();
   const [post, setPost] = useState(null);
@@ -28,13 +34,9 @@ export default function KavyaPostPage() {
   const [bookmarked, setBookmarked] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Note: For matching the SS structure, RelatedPoems is placed in the right column,
-  // and Comments are placed in the left column below the poem content.
-
   const token = Cookies.get("token");
 
-  // --- API / Backend Integration (Kept as is) ---
-  // 🟢 Fetch Poem Details
+  // 📌 Fetch Poem
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -46,6 +48,7 @@ export default function KavyaPostPage() {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           }
         );
+
         const data = await res.json();
         setPost(data.poem || data);
         setComments(data.poem?.comments || data.comments || []);
@@ -60,7 +63,7 @@ export default function KavyaPostPage() {
     fetchPost();
   }, [postSlug, token]);
 
-  // ❤️ Like Function
+  // ❤️ Like
   const handleLike = async () => {
     if (!post?._id) return;
     try {
@@ -72,15 +75,18 @@ export default function KavyaPostPage() {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
       );
-      if (res.status === 401) return alert("कृपया पहले लॉगिन करें!");
+      if (res.status === 401) return alert("कृपया लॉगिन करें!");
+
       const data = await res.json();
-      if (data.success) setLiked(data.isLiked);
+      if (data.success) {
+        setLiked(data.isLiked);
+      }
     } catch (error) {
       console.error("Like error:", error);
     }
   };
 
-  // 🔖 Bookmark Function
+  // 🔖 Bookmark
   const handleBookmark = async () => {
     if (!post?._id) return;
     try {
@@ -92,7 +98,8 @@ export default function KavyaPostPage() {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
       );
-      if (res.status === 401) return alert("कृपया पहले लॉगिन करें!");
+      if (res.status === 401) return alert("कृपया लॉगिन करें!");
+
       const data = await res.json();
       if (data.success) setBookmarked(!bookmarked);
     } catch (error) {
@@ -103,6 +110,7 @@ export default function KavyaPostPage() {
   // 💬 Add Comment
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/poems/${post._id}/comment`,
@@ -116,20 +124,23 @@ export default function KavyaPostPage() {
           credentials: "include",
         }
       );
-      if (res.status === 401) return alert("कृपया पहले लॉगिन करें!");
+
+      if (res.status === 401) return alert("कृपया लॉगिन करें!");
+
       const data = await res.json();
       if (data.success) {
         setComments(data.comments || []);
         setNewComment("");
       }
     } catch (error) {
-      console.error("Add comment error:", error);
+      console.error("Comment error:", error);
     }
   };
 
   // 🔗 Share
   const handleShare = async () => {
     const shareUrl = window.location.href;
+
     try {
       if (navigator.share) {
         await navigator.share({
@@ -141,211 +152,214 @@ export default function KavyaPostPage() {
         navigator.clipboard.writeText(shareUrl);
         alert("🔗 लिंक कॉपी हो गया!");
       }
-    } catch (error) {
+    } catch {
       navigator.clipboard.writeText(shareUrl);
       alert("🔗 लिंक कॉपी हो गया!");
     }
   };
-  // ---------------------------------------------------
 
-  // --- Loading / Error State ---
   if (loading)
-    return <p className="text-center py-10 text-gray-500">Loading...</p>;
+    return <p className="text-center py-10 text-gray-500">लोड हो रहा है...</p>;
 
   if (!post)
     return <p className="text-center py-10 text-red-500">पोस्ट नहीं मिली।</p>;
 
-  // 📝 Main Render
   return (
-    // Max width and background adjusted to mimic the overall page container
     <main className="min-h-screen pt-4 pb-12 px-4 bg-white font-serif">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {/* 🖋 Left Section (Poem Content and Comments) */}
+        
+        {/* LEFT SIDE */}
         <div className="lg:col-span-2 space-y-8">
-          
-          {/* Poem Image (Top span) */}
+
+          {/* Image */}
           {post.image?.url && (
-            // Updated wrapper: center contents and use objectFit: 'contain' so image never crops
-            <div
-              className="relative w-full overflow-hidden rounded-xl shadow-lg bg-gray-50 flex items-center justify-center"
-              style={{ aspectRatio: "16 / 9" }}
-            >
+            <div className="relative w-full overflow-hidden rounded-xl shadow-lg bg-gray-50 flex items-center justify-center"
+              style={{ aspectRatio: "16 / 9" }}>
               <Image
                 src={post.image.url}
                 alt={post.title}
                 fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 66vw, 1200px"
                 style={{ objectFit: "contain" }}
-                className="max-w-full max-h-full transition-transform duration-300 hover:scale-105"
-                priority
+                className="hover:scale-105 transition-all duration-300"
               />
             </div>
           )}
 
-          {/* Title and Metadata */}
+          {/* TITLE */}
           <div className="pt-4 px-2">
             <h1 className="text-4xl font-extrabold text-[#1f2937] mb-2">
               {post.title}
             </h1>
 
-            {/* Author and Date (SS Style) */}
-            <p className="text-sm text-gray-600 font-semibold mb-6">
-              द्वारा : {post.writerId?.penName || post.writerId?.fullName || "अज्ञात"} |
-              {new Date(post.createdAt).toLocaleDateString("hi-IN", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
+            {/* AUTHOR SECTION (Spotify Style) */}
+            <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
 
-  
-          
-            {/* Poem Content */}
+              {/* Left: Avatar + Writer */}
+               <Link
+    href={`/writer/${post.writerId?._id}`}
+    className="flex items-center gap-3 cursor-pointer group"
+  >
+    {post.writerId?.avatar ? (
+      <Image
+        src={post.writerId.avatar}
+        width={42}
+        height={42}
+        alt="writer"
+        className="rounded-full shadow-md w-11 h-11 border border-gray-200 group-hover:scale-110 transition"
+      />
+    ) : (
+      <FaUserCircle className="text-gray-400 text-5xl group-hover:text-gray-600 transition" />
+    )}
+
+    <div>
+      <p className="text-sm font-semibold text-gray-900 group-hover:text-[#7a1c10] transition">
+        {post.writerId?.penName || post.writerId?.fullName}
+      </p>
+
+      <p className="text-xs text-gray-500 flex items-center gap-2">
+        <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
+        {new Date(post.createdAt).toLocaleDateString("hi-IN", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })}
+      </p>
+    </div>
+  </Link>
+
+              {/* Right: Like + Bookmark Count */}
+           
+            </div>
+
+            {/* CONTENT */}
             <div
-              className="text-[#3f3f46] text-xl leading-9 whitespace-pre-wrap font-medium" // Large font and spacing for poetry
+              className="text-[#3f3f46] text-xl leading-9 whitespace-pre-wrap font-medium"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
 
-            {/* 🎥 Video Link (Kept below content) */}
+            {/* VIDEO */}
             {post.videoLink && (
-              <div className="flex justify-start mt-8">
-                <a
-                  href={post.videoLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#7a1c10] hover:bg-[#a12717] text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-md transition-all duration-300"
-                >
-                  ▶ वीडियो देखें
-                </a>
-              </div>
+              <a
+                href={post.videoLink}
+                target="_blank"
+                className="inline-flex items-center gap-2 bg-[#7a1c10] hover:bg-[#a12717]
+                 text-white px-5 py-2.5 rounded-full mt-6"
+              >
+                ▶ वीडियो देखें
+              </a>
             )}
 
-            {/* 🎵 Audio Player */}
-{post.audio?.url && (
-  <div className="mt-8 bg-gray-100 p-4 rounded-xl shadow">
-    <audio controls className="w-full">
-      <source src={post.audio.url} type="audio/mpeg" />
-      आपका ब्राउज़र ऑडियो प्लेयर को सपोर्ट नहीं करता।
-    </audio>
-  </div>
-)}
-
+            {/* AUDIO */}
+            {post.audio?.url && (
+              <div className="mt-8 bg-gray-100 p-4 rounded-xl shadow">
+                <audio controls className="w-full">
+                  <source src={post.audio.url} />
+                </audio>
+              </div>
+            )}
           </div>
 
-          {/* SS Style Interaction Bar */}
-          <div className="flex items-center justify-between border-t border-b py-4 px-2 text-gray-500 text-sm">
-            <div className="flex items-center gap-4">
-                {/* Likes */}
-                <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={handleLike}
-                    className="flex items-center gap-1 hover:text-red-500 transition"
-                >
-                    <FaThumbsUp className={`text-lg ${liked ? 'text-red-500' : ''}`} />
-                    {/* <span className="font-semibold text-gray-800">1.2K</span> Placeholder count */}
-                </motion.button>
-                {/* Comments Count */}
-                <div className="flex items-center gap-1">
-                    {/* <span className="font-semibold text-gray-800">420</span> Placeholder count */}
-                </div>
-                {/* Share */}
-                <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={handleShare}
-                    className="flex items-center gap-1 hover:text-[#7a1c10] transition"
-                >
-                    <FaShareAlt className="text-lg" />
-                    <span>साझा करें</span>
-                </motion.button>
-            </div>
-            {/* Bookmark/Save (Moved to the end) */}
-            <motion.button
+          {/* INTERACTION BAR */}
+          <div className="flex items-center justify-between border-t border-b py-4 px-2 text-gray-600 text-sm">
+
+            <div className="flex items-center gap-6">
+
+              {/* LIKE BUTTON */}
+              <motion.button
                 whileTap={{ scale: 0.9 }}
-                onClick={handleBookmark}
-                className="flex items-center gap-2 text-[#7a1c10] hover:text-[#a12717] transition border border-[#7a1c10] px-4 py-1.5 rounded-full"
-            >
-                {bookmarked ? (
-                    <FaBookmark className="text-sm" />
+                onClick={handleLike}
+                className="flex items-center gap-2 hover:text-red-500"
+              >
+                {liked ? (
+                  <FaHeart className="text-lg text-red-600" />
                 ) : (
-                    <FaRegBookmark className="text-sm" />
+                  <FaRegHeart className="text-lg" />
                 )}
-                <span>सहेजें</span>
+                <span>{formatCount(post.likeCount ?? item.likes?.length ?? 0)}</span>
+              </motion.button>
+
+              {/* COMMENT COUNT */}
+             
+
+              {/* SHARE */}
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={handleShare}
+                className="flex items-center gap-2 hover:text-[#7a1c10]"
+              >
+                <FaShareAlt />
+                <span>साझा करें</span>
+                  <span>{formatCount(comments.length)}</span>
+              </motion.button>
+            </div>
+
+            {/* BOOKMARK */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handleBookmark}
+              className="flex items-center gap-2 border border-[#7a1c10] text-[#7a1c10] hover:text-[#a12717] hover:border-[#a12717] px-4 py-1.5 rounded-full"
+            >
+              {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+              <span>सहेजें</span>
             </motion.button>
           </div>
 
-          {/* SS Style Comments Section (Left Column) */}
+          {/* COMMENTS SECTION */}
           <div className="p-2 space-y-6">
             <h2 className="text-xl font-bold text-[#1f2937]">
-              टिप्पणियाँ ({comments?.length || 0})
+              टिप्पणियाँ ({comments.length})
             </h2>
 
-            {/* Input (Similar to SS, simple text area look) */}
-            <div className="mb-6 border border-gray-300 rounded-lg p-4 bg-gray-50">
+            {/* Input */}
+            <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
               <textarea
                 value={newComment}
+                rows={2}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="अपनी टिप्पणी लिखें..."
-                rows={2}
-                className="w-full resize-none outline-none text-base bg-transparent"
+                className="w-full bg-transparent outline-none resize-none"
               />
-              <div className="flex justify-end mt-2">
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleAddComment}
-                    className="bg-[#7a1c10] hover:bg-[#a12717] text-white px-5 py-2 rounded-lg text-sm font-medium flex items-center justify-center shadow-md transition disabled:opacity-50"
-                    disabled={!newComment.trim()}
-                  >
-                    टिप्पणी भेजें <FaPaperPlane className="ml-2 text-xs" />
-                  </motion.button>
+              <div className="flex justify-end">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim()}
+                  className="bg-[#7a1c10] text-white px-5 py-2 rounded-lg mt-2"
+                >
+                  टिप्पणी भेजें
+                </motion.button>
               </div>
             </div>
 
             {/* Comments List */}
-            {comments?.length > 0 ? (
-              <div className="space-y-4">
-                {comments.map((c, i) => (
-                  <div
-                    key={i}
-                    className="flex gap-4 p-3 border-b border-gray-100 last:border-b-0"
-                  >
-                    {c.profilePic ? (
-                      <Image
-                        src={c.profilePic}
-                        alt={c.username}
-                        width={40}
-                        height={40}
-                        className="rounded-full object-cover w-10 h-10 border border-gray-200 flex-shrink-0"
-                      />
-                    ) : (
-                      <FaUserCircle className="text-gray-400 text-4xl flex-shrink-0" />
-                    )}
-                    <div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="font-bold text-[#1f2937]">
-                          {c.username || "User"}
-                        </span>
-                        <span className="text-gray-500 text-xs">
-                          {c.date ? new Date(c.date).toLocaleDateString("hi-IN") : 'कुछ देर पहले'}
-                        </span>
-                      </div>
-                      <p className="text-gray-700 text-base mt-1 leading-snug">
-                        {c.commentText}
-                      </p>
-                    </div>
+            {comments.length > 0 ? (
+              comments.map((c, i) => (
+                <div key={i} className="flex gap-4 border-b pb-4">
+                  {c.profilePic ? (
+                    <Image
+                      src={c.profilePic}
+                      width={40}
+                      height={40}
+                      className="rounded-full border"
+                    />
+                  ) : (
+                    <FaUserCircle className="text-gray-400 text-4xl" />
+                  )}
+
+                  <div>
+                    <p className="font-bold">{c.username}</p>
+                    <p className="text-gray-700">{c.commentText}</p>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))
             ) : (
-              <p className="text-gray-500 text-sm italic text-center py-4">
-                अभी तक कोई टिप्पणी नहीं की गई है।
-              </p>
+              <p className="text-center text-gray-500">अभी कोई टिप्पणी नहीं।</p>
             )}
           </div>
         </div>
 
-        {/* 💬 Right Section (Related Poems) - Matches SS Sidebar */}
-        <div className="lg:col-span-1 pt-4 lg:pt-0">
+        {/* RIGHT SIDE RELATED */}
+        <div className="lg:col-span-1 pt-4">
           <RelatedPoems poemId={post._id} />
         </div>
       </div>

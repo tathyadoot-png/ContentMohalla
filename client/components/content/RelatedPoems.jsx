@@ -106,7 +106,7 @@ export default function RelatedPoems({ poemId, limit = 6, isSidebar = true }) {
                     </p>
                     <div className="mt-1 text-xs text-gray-500 flex items-center gap-1">
                       <FaCalendarAlt className="text-xs" />
-                      <span>{new Date(r.createdAt).toLocaleDateString("hi-IN", { month: "short", day: "numeric", year: "numeric" })}</span>
+                      <span>{new Date(r.date).toLocaleDateString("hi-IN", { month: "short", day: "numeric", year: "numeric" })}</span>
                     </div>
                   </div>
                 </Link>
@@ -158,7 +158,7 @@ export default function RelatedPoems({ poemId, limit = 6, isSidebar = true }) {
                     <p className="text-sm text-gray-600 mt-2 line-clamp-3">{(r.content || "").slice(0, 150)}...</p>
                     <div className="mt-4 text-xs text-gray-500 flex justify-between items-center border-t pt-3">
                         <span className="font-medium text-gray-700">{r.writerId?.fullName || r.writerId?.penName || "Unknown"}</span>
-                        <span><FaCalendarAlt className="inline mr-1 text-sm" />{new Date(r.createdAt).toLocaleDateString("hi-IN", { month: "short", day: "numeric" })}</span>
+                        <span><FaCalendarAlt className="inline mr-1 text-sm" />{new Date(r.date).toLocaleDateString("hi-IN", { month: "short", day: "numeric" })}</span>
                     </div>
                 </div>
               </Link>
