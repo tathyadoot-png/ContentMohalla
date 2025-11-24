@@ -7,6 +7,8 @@ export default function UserPoemForm() {
   const [loading, setLoading] = useState(false);
   const [languages, setLanguages] = useState([]);
 
+
+
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -18,7 +20,7 @@ export default function UserPoemForm() {
   });
 
   const [image, setImage] = useState(null);
-
+  const [audio, setAudio] = useState(null);
   // 🟩 Fetch Languages (like Admin)
   useEffect(() => {
     setMounted(true);
@@ -77,6 +79,7 @@ export default function UserPoemForm() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleFileChange = (e) => setImage(e.target.files[0]);
+const handleAudioChange = (e) => setAudio(e.target.files[0]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,6 +111,7 @@ export default function UserPoemForm() {
       form.append("isAdminPost", false);
 
       if (image) form.append("image", image);
+if (audio) form.append("audio", audio);
 
       const res = await fetch(`${apiUrl}/api/poems/create`, {
         method: "POST",
@@ -301,7 +305,9 @@ export default function UserPoemForm() {
           />
         </div>
 
-        {/* Image Upload */}
+        {/* Image Upload */} 
+
+        <div className="flex">
         <div>
           <label className="block font-semibold mb-1 text-gray-700 dark:text-gray-200">चित्र अपलोड करें</label>
           <input
@@ -311,6 +317,21 @@ export default function UserPoemForm() {
             className="block mt-1 text-sm text-gray-700 dark:text-gray-300"
           />
         </div>
+{/* Audio Upload */}
+<div>
+  <label className="block font-semibold mb-1 text-gray-700 dark:text-gray-200">
+    ऑडियो अपलोड करें (वैकल्पिक)
+  </label>
+  <input
+    type="file"
+    accept="audio/*"
+    onChange={handleAudioChange}
+    className="block mt-1 text-sm text-gray-700 dark:text-gray-300"
+  />
+</div>
+
+        </div>
+
 
         {/* Submit */}
         <button

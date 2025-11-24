@@ -1,28 +1,37 @@
 // backend/config/multer.js
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "./cloudinary.js";
 
-// ✅ Step 1: Ensure "uploads" folder exists
-const uploadDir = path.join(process.cwd(), "uploads"); // absolute path
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-  console.log("📁 Created uploads folder at:", uploadDir);
-}
+// ✔ Cloudinary universal storage (image + audio + video)
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    let folder = "misc";
+    let resourceType = "auto"; // auto handles image, video, raw
 
-// ✅ Step 2: Set up local disk storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
+    // Detect file type
+    if (file.mimetype.startsWith("image")) {
+      folder = "avatars";
+      resourceType = "image";
+    } else if (file.mimetype.startsWith("audio")) {
+      folder = "audios";
+      resourceType = "raw"; // audio must use raw
+    } else if (file.mimetype.startsWith("video")) {
+      folder = "videos";
+      resourceType = "video";
+    }
+
+    return {
+      folder,
+      resource_type: resourceType,
+      allowed_formats: ["jpg", "jpeg", "png", "webp", "mp3", "wav", "mp4", "mkv"],
+      transformation:
+        resourceType === "image"
+          ? [{ width: 300, height: 300, crop: "limit" }]
+          : undefined, // only images are transformed
+    };
   },
 });
 
-// ✅ Step 3: Export multer instance
-const upload = multer({ storage });
-console.log("✅ Multer storage initialized using local uploads folder");
-
-export default upload;
+export default multer({ storage });

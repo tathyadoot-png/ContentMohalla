@@ -199,13 +199,8 @@ export default function KavyaPostPage() {
               })}
             </p>
 
-            {/* Poem Description/Excerpt */}
-            <p className="text-base text-gray-600 border-l-4 border-gray-200 pl-4 italic mb-8">
-                नई कविता का इस छोटे से कालखंड...
-                {/* Assuming a short description field or generating one */}
-                यह कविता का एक छोटा सा कालखंड कॉमेंट या परिकल्पना अनुभाग, जो पाठक के लिए माहौल तैयार करता है। यह कविता को गहरे अर्थों और भावनाओं की एक शानदार पृष्ठभूमि देता है।
-            </p>
-
+  
+          
             {/* Poem Content */}
             <div
               className="text-[#3f3f46] text-xl leading-9 whitespace-pre-wrap font-medium" // Large font and spacing for poetry
@@ -225,6 +220,17 @@ export default function KavyaPostPage() {
                 </a>
               </div>
             )}
+
+            {/* 🎵 Audio Player */}
+{post.audio?.url && (
+  <div className="mt-8 bg-gray-100 p-4 rounded-xl shadow">
+    <audio controls className="w-full">
+      <source src={post.audio.url} type="audio/mpeg" />
+      आपका ब्राउज़र ऑडियो प्लेयर को सपोर्ट नहीं करता।
+    </audio>
+  </div>
+)}
+
           </div>
 
           {/* SS Style Interaction Bar */}

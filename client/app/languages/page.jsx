@@ -4,6 +4,11 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { IoPlaySharp } from "react-icons/io5";
+import {
+  FiHeart,
+  FiBookmark,
+} from "react-icons/fi";
+
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const API_ENDPOINT = `${API_BASE}/api/poems/no-hindi`;
@@ -256,56 +261,117 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
               const badgeText = getBadgeText(poem);
 
               return (
-                <Link
-                  key={id}
-                  href={`/kavya/${encodeURIComponent(rasSlug || "general")}/${encodeURIComponent(slug)}`}
-                  className="group block rounded-2xl overflow-hidden bg-white dark:bg-[#042f37] border border-[#f1e7d3] dark:border-[#0f3a42] shadow-sm hover:shadow-md transition-transform duration-200 hover:scale-[1.02]"
-                >
-                  <div className="relative">
-                    <div className="absolute z-20 left-3 top-3">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 border border-amber-200/60 max-w-[110px] truncate inline-block">
-                        {badgeText}
-                      </span>
-                    </div>
+           <Link
+  key={id}
+  href={`/kavya/${encodeURIComponent(rasSlug || "general")}/${encodeURIComponent(slug)}`}
+ className="group block bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 
+rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1
+w-full sm:w-[320px] min-h-[320px]"
 
-                    <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-[#f3e7db]">
-                      {imageUrl ? (
-                        <Image src={imageUrl} alt={title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                      ) : (
-                        <div className="flex items-center justify-center w-full h-full bg-[#f3e7db] dark:bg-[#06323a] text-[#7a1c10] dark:text-[#2dd4bf] font-semibold text-lg p-4">
-                          {title.slice(0, 30)}
-                        </div>
-                      )}
+>
+  {/* IMAGE + BADGE */}
+  <div className="relative w-full aspect-[3/2] overflow-hidden rounded-t-2xl bg-gray-100 dark:bg-[#1a1a1a]">
+    
+    {/* Badge — Language */}
+    <span className="absolute top-3 left-3 z-20 px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 text-xs font-semibold shadow">
+      {badgeText}
+    </span>
 
-                      {poem.videoLink && (
-                        <a
-                          href={poem.videoLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="absolute inset-0 flex items-center justify-center bg-black/24 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <div className="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center shadow transform hover:scale-110 transition-transform">
-                            <IoPlaySharp />
-                          </div>
-                        </a>
-                      )}
-                    </div>
-                  </div>
+    {/* Image */}
+    {imageUrl ? (
+      <Image
+        src={imageUrl}
+        alt={title}
+        fill
+        className="object-cover transition-transform duration-500 group-hover:scale-105"
+      />
+    ) : (
+      <div className="flex items-center justify-center w-full h-full bg-gray-200 dark:bg-[#333] text-gray-700 dark:text-gray-300 p-4 text-center">
+        {title.slice(0, 40)} 
+        
+      </div>
+    )}
 
-                  <div className="p-3 sm:p-4">
-                    <h3 className="text-base sm:text-lg font-semibold text-[#8C2B2B] dark:text-[#2dd4bf] line-clamp-2">{title}</h3>
-                    <p className="mt-2 text-sm text-[#6B4F4F] dark:text-gray-300 line-clamp-3">
-                      {String(content).replace(/<[^>]+>/g, "").slice(0, 120)}
-                      {String(content).length > 120 ? "..." : ""}
-                    </p>
+    {/* DATE on Image (top-right) */}
+{createdAt && (
+  <span className="absolute top-3 right-3 z-20 px-3 py-1 rounded-full 
+    bg-black/50 text-white text-xs font-medium backdrop-blur-sm">
+    {new Date(createdAt).toLocaleDateString("hi-IN", {
+      month: "short",
+      day: "numeric",
+    })}
+  </span>
+)}
 
-                    <div className="mt-3 flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-                      <div className="font-medium text-sm text-[#6B4F4F] dark:text-gray-300">✍️ {writer}</div>
-                      <div>{createdAt ? new Date(createdAt).toLocaleDateString("hi-IN", { month: "short", day: "numeric" }) : ""}</div>
-                    </div>
-                  </div>
-                </Link>
+  </div>
+
+  {/* CONTENT */}
+  <div className="p-4 flex flex-col gap-3">
+
+    {/* TITLE */}
+    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-teal-300 transition-colors">
+      {title}
+    </h3>
+
+    {/* DESCRIPTION */}
+    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+      {String(content).replace(/<[^>]+>/g, "").slice(0, 120)}
+      {String(content).length > 120 ? "..." : ""}
+    </p>
+
+    {/* FOOTER — WRITER + DATE */}
+{/* FOOTER — WRITER + LIKE & BOOKMARK */}
+<div className="pt-3 mt-auto border-t border-gray-200 dark:border-gray-800 
+flex items-center justify-between">
+
+  {/* Writer */}
+  <Link
+    href={`/writer/${poem.writerId?._id || poem.writerId || ""}`}
+    onClick={(e) => e.stopPropagation()}
+    className="flex items-center gap-2 group/writer"
+  >
+    {poem.writerAvatar || poem.writerId?.avatar ? (
+      <Image
+        src={poem.writerAvatar || poem.writerId.avatar}
+        width={30}
+        height={30}
+        className="rounded-full object-cover"
+        alt={writer}
+      />
+    ) : (
+      <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700">
+        ✍️
+      </div>
+    )}
+
+    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover/writer:underline">
+      {writer}
+    </span>
+  </Link>
+
+  {/* LIKE + BOOKMARK */}
+  <div className="flex items-center gap-3 text-xs">
+
+    <div className="flex items-center gap-1 text-red-500">
+      <FiHeart size={14} />
+      <span className="font-bold text-gray-600 dark:text-gray-400">
+        {poem.likeCount ?? poem.likes?.length ?? 0}
+      </span>
+    </div>
+
+    <div className="flex items-center gap-1 text-amber-600 dark:text-teal-300">
+      <FiBookmark size={14} />
+      <span className="font-bold text-gray-600 dark:text-gray-400">
+        {poem.bookmarkCount ?? poem.bookmarks?.length ?? 0}
+      </span>
+    </div>
+
+  </div>
+</div>
+
+  </div>
+</Link>
+
               );
             })}
           </div>

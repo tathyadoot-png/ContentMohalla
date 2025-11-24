@@ -44,7 +44,10 @@ export const registerUser = async (req, res) => {
     const socialLinks = buildSocialLinksFromBody(req.body);
 
     // avatar from upload if present
-    const avatarUrl = req.file ? (req.file.path || req.file.secure_url) : DEFAULT_AVATAR;
+const avatarUrl = req.file
+  ? req.file.path    // ✔ Cloudinary URL automatically provided
+  : DEFAULT_AVATAR;
+
 
     if (!fullName) {
       return res.status(400).json({
@@ -116,41 +119,42 @@ export const createUserByAdmin = async (req, res) => {
       tagline,
       profession,
       location,
-      role // optional: "admin" or "user"
+      role
     } = req.body;
 
     if (!fullName) {
       return res.status(400).json({ message: "fullName is required" });
     }
 
-    // avatar if uploaded by admin (optional)
-    const avatarUrl = req.file ? (req.file.path || req.file.secure_url) : DEFAULT_AVATAR;
+    // 👇 SAME CLOUDINARY LOGIC AS REGISTER USER
+const avatarUrl = req.file
+  ? req.file.path    // ✔ Cloudinary URL automatically provided
+  : DEFAULT_AVATAR;
 
-    // create user instance so mongoose will generate uniqueId via schema default
+
     const newUser = new User({
       fullName,
       penName,
-      // email assigned below
       bio: bio || "",
       phone: phone || "",
       tagline: tagline || "",
       profession: profession || "",
       location: location || "",
-      avatar: avatarUrl,
+      avatar: avatarUrl,   // 👈 CLOUDINARY URL SAVING
       socialLinks: {},
       role: role === "admin" ? "admin" : "user",
     });
 
-    // decide email: use provided if present else generate from uniqueId
     const emailProvided = rawEmail && String(rawEmail).trim().length > 0;
-    const desiredEmail = emailProvided ? String(rawEmail).trim().toLowerCase() : makeGeneratedEmail(newUser.uniqueId, "gmail.com");
+    const desiredEmail = emailProvided
+      ? String(rawEmail).trim().toLowerCase()
+      : makeGeneratedEmail(newUser.uniqueId, "gmail.com");
 
     if (emailProvided) {
       const exists = await User.findOne({ email: desiredEmail });
       if (exists) return res.status(400).json({ message: "Email already in use" });
       newUser.email = desiredEmail;
     } else {
-      // generated email: ensure no rare collision
       const collision = await User.findOne({ email: desiredEmail });
       if (collision) {
         newUser.email = `${newUser.uniqueId}_${Math.floor(Math.random() * 9000 + 1000)}@gmail.com`;
@@ -159,24 +163,25 @@ export const createUserByAdmin = async (req, res) => {
       }
     }
 
-    // initial password = uniqueId (hashed)
     const plainPassword = newUser.uniqueId;
     newUser.password = await bcrypt.hash(plainPassword, 10);
 
     await newUser.save();
 
-    // return useful info to admin (include email + uniqueId)
     return res.status(201).json({
       message: "User created by admin",
       userId: newUser._id,
       uniqueId: newUser.uniqueId,
       email: newUser.email,
+      avatar: newUser.avatar,  // 👈 OPTIONAL RESPONSE
     });
+
   } catch (err) {
     console.error("Admin create user error:", err);
     return res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 
 export const loginUser = async (req, res) => {
   try {

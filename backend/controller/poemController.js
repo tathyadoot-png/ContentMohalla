@@ -218,7 +218,7 @@ export const getPoemBySlug = async (req, res) => {
   }
 };
 
-
+ 
 
 
 // ===============================
@@ -882,14 +882,20 @@ export const getTopPoems = async (req, res) => {
 
 export const getPoemsExcludingHindi = async (req, res) => {
   try {
-    const HINDI_ID = "6912fd5c34b9b95a0133ab74"; // तुम्हारी Hindi id
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, parseInt(req.query.limit, 10) || 20);
     const skip = (page - 1) * limit;
 
+    // ❌ पहले ID check हो रहा था → गलत
+    // const HINDI_ID = "xxxx";
+
+    // ✅ अब name के आधार पर Hindi exclude
     const filter = {
       status: "approved",
-      $nor: [{ languages: { $elemMatch: { mainLanguage: HINDI_ID } } }],
+      $nor: [
+        { languages: { $elemMatch: { mainLanguage: "Hindi" } } },
+        { languages: { $elemMatch: { subLanguageName: "हिन्दी" } } },
+      ]
     };
 
     const total = await Poem.countDocuments(filter);
@@ -898,83 +904,39 @@ export const getPoemsExcludingHindi = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("writerId", "fullName penName")
+      .populate("writerId", "fullName penName avatar")
       .lean();
 
-    // collect all candidate ids from poems (mainLanguage & subLanguageName)
-    const idSet = new Set();
-    poems.forEach((p) => {
-      if (!Array.isArray(p.languages)) return;
-      p.languages.forEach((lg) => {
-        if (lg?.mainLanguage && typeof lg.mainLanguage === "string") idSet.add(lg.mainLanguage);
-        if (lg?.subLanguageName && typeof lg.subLanguageName === "string") idSet.add(lg.subLanguageName);
-      });
-    });
+    // 🟢 नीचे mapping वाली logic optional है क्योंकि अब IDs नहीं हैं।
+    // लेकिन तुमने अगर रखनी हो, रख लो — कोई harm नहीं.
 
-    const ids = Array.from(idSet).filter((id) => id && id.length === 24);
-    const langMap = {}; // map id -> readable name
+const result = poems.map((p) => {
+  const writer = p.writerId || null;
 
-    if (ids.length) {
-      // fetch Language docs which either have _id in ids OR have subLanguages._id in ids
-      const langDocs = await Language.find({
-        $or: [
-          { _id: { $in: ids } },
-          { "subLanguages._id": { $in: ids } },
-        ],
-      }).lean();
+  let desc = p.metaDescription || p.description || "";
+  if (!desc && p.content) {
+    const txt = String(p.content).replace(/<[^>]+>/g, "").trim();
+    desc = txt.length > 120 ? txt.slice(0, 117).trim() + "..." : txt;
+  }
 
-      // populate langMap:
-      langDocs.forEach((ld) => {
-        // top-level mapping (Language _id -> mainCategory)
-        if (ld._id) {
-          langMap[String(ld._id)] = ld.mainCategory || null;
-        }
-        // subLanguages: map each subLanguages._id -> subLanguages.name
-        if (Array.isArray(ld.subLanguages)) {
-          ld.subLanguages.forEach((sl) => {
-            if (sl && sl._id) {
-              // prefer sub-language name (sl.name), fallback to parent mainCategory if needed
-              langMap[String(sl._id)] = sl.name || sl.title || ld.mainCategory || null;
-            }
-          });
-        }
-      });
-    }
+  return {
+    id: p._id,
+    title: p.title,
+    slug: p.slug,
+    date: p.date,
+    image: p?.image?.url || null,
 
-    // build final shaped result attaching languagesResolved
-    const result = poems.map((p) => {
-      const writer = p.writerId || null;
+    writerId: writer,                       // ★ added
+    writerName: writer ? (writer.penName || writer.fullName) : null,
+    writerAvatar: writer?.avatar || null,   // ★ added
 
-      const languagesResolved = (p.languages || []).map((lg) => {
-        const mainId = lg?.mainLanguage ? String(lg.mainLanguage) : null;
-        const subId = lg?.subLanguageName ? String(lg.subLanguageName) : null;
-        return {
-          mainLanguageId: mainId,
-          mainLanguageName: mainId ? (langMap[mainId] || null) : null,
-          subLanguageId: subId,
-          subLanguageName: subId ? (langMap[subId] || null) : null,
-        };
-      });
+    description: desc,
+    likeCount: p.likeCount ?? 0,
+    bookmarkCount: p.bookmarkCount ?? 0,
+    languagesResolved: p.languages || []
+  };
+});
 
-      let desc = p.metaDescription || p.description || "";
-      if (!desc && p.content) {
-        const txt = String(p.content).replace(/<[^>]+>/g, "").trim();
-        desc = txt.length > 120 ? txt.slice(0, 117).trim() + "..." : txt;
-      }
-
-      return {
-        id: p._id,
-        title: p.title,
-        slug: p.slug,
-        date: p.date,
-        image: (p.image && p.image.url) ? p.image.url : null,
-        writerName: writer ? (writer.penName || writer.fullName || null) : null,
-        description: desc || "",
-        likeCount: p.likeCount ?? 0,
-        bookmarkCount: p.bookmarkCount ?? 0,
-        languagesResolved, // frontend should use this for badge
-      };
-    });
 
     return res.status(200).json({
       success: true,
@@ -988,7 +950,6 @@ export const getPoemsExcludingHindi = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error fetching poems" });
   }
 };
-
 
 export const getMyPoems = async (req, res) => {
   try {

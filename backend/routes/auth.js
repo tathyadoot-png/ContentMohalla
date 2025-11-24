@@ -17,6 +17,11 @@ router.post("/login", (req, res, next) => {
 router.post("/logout", logoutUser);
 router.get("/me", protect, getLoggedInUser);
 
-router.post("/admin/create-user", protect, authorizeRoles("admin"), upload.single("avatar"), createUserByAdmin);
+router.post(
+  "/admin/create-user",
+  protect,
+  upload.single("avatar"),   // ✔ Same as register
+  createUserByAdmin
+);
 
 export default router;
