@@ -26,10 +26,11 @@ const storage = new CloudinaryStorage({
       folder,
       resource_type: resourceType,
       allowed_formats: ["jpg", "jpeg", "png", "webp", "mp3", "wav", "mp4", "mkv"],
-      transformation:
-        resourceType === "image"
-          ? [{ width: 300, height: 300, crop: "limit" }]
-          : undefined, // only images are transformed
+     transformation:
+  resourceType === "image"
+    ? [{ width: 1200, crop: "limit" }]
+    : undefined
+
     };
   },
 });

@@ -229,82 +229,87 @@ const handleDeletePoem = async (id) => {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-gray-700 divide-y divide-gray-200">
               <thead className="bg-[#B83D43] text-white sticky top-0">
-                <tr>
+                <tr>handleShare 
                   <th className="py-3 px-6 text-left">Image</th>
                   <th className="py-3 px-6 text-left">Title</th>
                   <th className="py-3 px-6 text-left hidden sm:table-cell">
                     Writer
                   </th>
+                  <th className="py-3 px-6 text-left">Date</th>
                   <th className="py-3 px-6 text-left">Status</th>
                   <th className="py-3 px-6 text-left">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {posts.map((p) => (
-                  <tr key={p._id} className="hover:bg-[#f7efdc] transition">
-                    <td className="py-3 px-6">
-                      {p.image ? (
-                        <img
-                          src={p.image.url || p.image}
-                          alt="poem"
-                          className="w-12 h-12 object-cover rounded-lg shadow"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <svg className="w-6 h-6 text-gray-400" />
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-3 px-6 font-medium text-[#B83D43]">
-                      {p.title}
-                    </td>
-                    <td className="py-3 px-6 hidden sm:table-cell">
-                      {p.writerId?.fullName || "N/A"}
-                    </td>
-                    <td className="py-3 px-6">
-                      {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
-                    </td>
-                    <td className="py-3 px-6 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => handlePreview(p)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded-full flex items-center"
-                      >
-                        <Eye className="w-4 h-4 mr-1" /> View
-                      </button>
-                      {activeTab === "pending" && (
-                        <>
-                          <button
-                            onClick={() => handleStatusChange(p._id, "approved")}
-                            className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 rounded-full"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(p._id, "rejected")}
-                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-full"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      {/* <button
-                        onClick={() => handleEdit(p)}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-white text-xs px-3 py-1 rounded-full"
-                      >
-                        Edit
-                      </button> */}
+      <tbody className="divide-y divide-gray-100">
+  {posts.map((p) => (
+    <tr key={p._id} className="hover:bg-[#f7efdc] transition">
+      <td className="py-3 px-6">
+        {p.image ? (
+          <img
+            src={p.image.url || p.image}
+            alt="poem"
+            className="w-12 h-12 object-cover rounded-lg shadow"
+          />
+        ) : (
+          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+            <svg className="w-6 h-6 text-gray-400" />
+          </div>
+        )}
+      </td>
 
-                      {/* Delete button (added) */}
-                      <button
-                        onClick={() => handleDeletePoem(p._id)}
-                        className="bg-red-500 hover:bg-red-600 hover:text-white text-white text-xs px-3 py-1 rounded-full flex items-center"
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" /> Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+      <td className="py-3 px-6 font-medium text-[#B83D43]">{p.title}</td>
+
+      <td className="py-3 px-6 hidden sm:table-cell">
+        {p.writerId?.fullName || "N/A"}
+      </td>
+
+      {/* 🆕 DATE COLUMN FIX */}
+      <td className="py-3 px-6">
+        {p.createdAt
+          ? new Date(p.createdAt).toLocaleDateString("en-IN")
+          : "N/A"}
+      </td>
+
+      <td className="py-3 px-6">
+        {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+      </td>
+
+      <td className="py-3 px-6 flex flex-wrap gap-2">
+        <button
+          onClick={() => handlePreview(p)}
+          className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded-full flex items-center"
+        >
+          <Eye className="w-4 h-4 mr-1" /> View
+        </button>
+
+        {activeTab === "pending" && (
+          <>
+            <button
+              onClick={() => handleStatusChange(p._id, "approved")}
+              className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 rounded-full"
+            >
+              Approve
+            </button>
+            <button
+              onClick={() => handleStatusChange(p._id, "rejected")}
+              className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-full"
+            >
+              Reject
+            </button>
+          </>
+        )}
+
+        <button
+          onClick={() => handleDeletePoem(p._id)}
+          className="bg-red-500 hover:bg-red-600 hover:text-white text-white text-xs px-3 py-1 rounded-full flex items-center"
+        >
+          <Trash2 className="w-4 h-4 mr-1" /> Delete
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
             </table>
           </div>
         )}
@@ -506,18 +511,6 @@ const handleDeletePoem = async (id) => {
   </div>
 )}
 
-      {/* Edit Modal -> AdminPostForm */}
-      {/* {isEditOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-4xl">
-            <AdminPostForm
-              poemId={editingPoemId}
-              onClose={closeEdit}
-              onUpdated={onFormUpdated}
-            />
-          </div>
-        </div>
-      )} */}
 
       {isEditOpen && selectedPoem && (
   <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">

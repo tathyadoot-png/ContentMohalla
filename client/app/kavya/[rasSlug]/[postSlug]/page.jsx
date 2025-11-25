@@ -137,26 +137,27 @@ export default function KavyaPostPage() {
     }
   };
 
-  // 🔗 Share
-  const handleShare = async () => {
-    const shareUrl = window.location.href;
+const handleShare = async () => {
+  const shareUrl = `${window.location.origin}/${post.category}/${post.subcategory}/${post.slug}`;
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: post.title,
-          text: "इस कविता को पढ़ें!",
-          url: shareUrl,
-        });
-      } else {
-        navigator.clipboard.writeText(shareUrl);
-        alert("🔗 लिंक कॉपी हो गया!");
-      }
-    } catch {
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: post.title,
+        text: "इस कविता को पढ़ें!",
+        url: shareUrl,
+      });
+    } else {
       navigator.clipboard.writeText(shareUrl);
       alert("🔗 लिंक कॉपी हो गया!");
     }
-  };
+  } catch {
+    navigator.clipboard.writeText(shareUrl);
+    alert("🔗 लिंक कॉपी हो गया!");
+  }
+};
+
+
 
   if (loading)
     return <p className="text-center py-10 text-gray-500">लोड हो रहा है...</p>;
