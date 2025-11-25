@@ -17,7 +17,7 @@ const buildSocialLinksFromBody = (body) => {
   return social;
 };
 
-const DEFAULT_AVATAR = "https://res.cloudinary.com/dw8ck8ubc/image/upload/v1763451349/Avatar_tpglgf.jpg";
+const DEFAULT_AVATAR = "https://res.cloudinary.com/dw8ck8ubc/image/upload/v1764057648/8982af85-fcbd-4aa1-8697-913d6e8db4d0_yj9e2f.jpg";
 
 
 const makeGeneratedEmail = (uniqueId, domain = "gmail.com") => {

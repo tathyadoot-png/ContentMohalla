@@ -229,7 +229,7 @@ const handleDeletePoem = async (id) => {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-gray-700 divide-y divide-gray-200">
               <thead className="bg-[#B83D43] text-white sticky top-0">
-                <tr>handleShare 
+                <tr> 
                   <th className="py-3 px-6 text-left">Image</th>
                   <th className="py-3 px-6 text-left">Title</th>
                   <th className="py-3 px-6 text-left hidden sm:table-cell">
@@ -257,16 +257,18 @@ const handleDeletePoem = async (id) => {
         )}
       </td>
 
-      <td className="py-3 px-6 font-medium text-[#B83D43]">{p.title}</td>
-
+      {/* <td className="py-3 px-6 font-medium text-[#B83D43]">{p.title}</td> */}
+  <td className="py-3 px-6 hidden sm:table-cell">
+                      {p.writerId?.fullName || "N/A"}
+                    </td>
       <td className="py-3 px-6 hidden sm:table-cell">
         {p.writerId?.fullName || "N/A"}
       </td>
 
       {/* 🆕 DATE COLUMN FIX */}
       <td className="py-3 px-6">
-        {p.createdAt
-          ? new Date(p.createdAt).toLocaleDateString("en-IN")
+        {p.date
+          ? new Date(p.date).toLocaleDateString("en-IN")
           : "N/A"}
       </td>
 
