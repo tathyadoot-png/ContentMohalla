@@ -24,6 +24,27 @@ const formatCount = (num) => {
   return num;
 };
 
+/* Small reusable interaction button (consistent with KavyaPostPage) */
+const ActionButton = ({ icon: Icon, filledIcon: FilledIcon, label, onClick, isActive }) => {
+  const IconComp = isActive ? FilledIcon : Icon;
+  return (
+    <motion.button
+      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: 1.03 }}
+      onClick={onClick}
+      className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-smooth text-sm font-medium"
+      style={{
+        color: isActive ? "var(--primary)" : "var(--text)",
+        background: isActive ? "rgba(255,107,0,0.06)" : "transparent",
+        border: `1px solid ${isActive ? "rgba(255,107,0,0.12)" : "var(--glass-border)"}`,
+      }}
+    >
+      <IconComp className="text-lg" style={{ color: isActive ? "var(--primary)" : undefined }} />
+      <span style={{ color: isActive ? "var(--primary)" : "var(--text)" }}>{label}</span>
+    </motion.button>
+  );
+};
+
 export default function GadhyaPostPage() {
   const { vidhaSlug, postSlug } = useParams(); // route params
   const router = useRouter();
@@ -85,14 +106,12 @@ export default function GadhyaPostPage() {
       const data = await res.json();
       if (data.success) {
         setLiked(data.isLiked);
-        // update local counts if returned
         if (data.likesCount !== undefined) {
           setPost((p) => ({ ...p, likeCount: data.likesCount }));
         } else {
-          // optimistic adjust
           setPost((p) => ({
             ...p,
-            likeCount: p?.likeCount ? (data.isLiked ? p.likeCount + 1 : p.likeCount - 1) : p.likeCount,
+            likeCount: p?.likeCount ? (data.isLiked ? p.likeCount + 1 : Math.max(p.likeCount - 1, 0)) : (data.isLiked ? 1 : 0),
           }));
         }
       }
@@ -184,32 +203,35 @@ export default function GadhyaPostPage() {
   };
 
   if (loading)
-    return <p className="text-center py-10 text-gray-500">लोड हो रहा है...</p>;
+    return <p className="text-center py-10" style={{ color: "var(--text)" }}>लोड हो रहा है...</p>;
 
   if (!post)
-    return <p className="text-center py-10 text-red-500">पोस्ट नहीं मिली।</p>;
+    return <p className="text-center py-10" style={{ color: "var(--text)" }}>पोस्ट नहीं मिली।</p>;
 
   // helper to safely access writer object (some apis return writerId or writer)
   const writer = post.writer || post.writerId || post.author || null;
   const writerId = writer?._id || writer?.id;
 
+  // helper to detect whether content contains HTML tags
+  const looksLikeHTML = (content) => /<\/?[a-z][\s\S]*>/i.test(content);
+
   return (
-    <main className="min-h-screen pt-4 pb-12 px-4 bg-white font-serif">
+    <main className="min-h-screen pt-4 pb-12 px-4" style={{ background: "var(--bg)", color: "var(--text)", fontFamily: "var(--font-devanagari, 'Tiro Devanagari Hindi', serif)" }}>
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* LEFT / MAIN */}
         <div className="lg:col-span-2 space-y-8">
-          {/* IMAGE */}
+          {/* IMAGE (no-crop: object-contain) */}
           {post.image?.url && (
             <div
-              className="relative w-full overflow-hidden rounded-xl shadow-lg bg-gray-50 flex items-center justify-center"
-              style={{ aspectRatio: "16 / 9" }}
+              className="relative w-full overflow-hidden rounded-xl shadow-lg bg-[var(--glass)] flex items-center justify-center"
+              style={{ aspectRatio: "16 / 9", border: "1px solid var(--glass-border)" }}
             >
               <Image
                 src={post.image.url}
                 alt={post.title || "Image"}
                 fill
-                style={{ objectFit: "contain" }}
-                className="transition-transform duration-300 group-hover:scale-105"
+                style={{ objectFit: "contain", objectPosition: "center" }}
+                className="transition-transform duration-300"
                 priority
               />
             </div>
@@ -217,7 +239,7 @@ export default function GadhyaPostPage() {
 
           {/* TITLE + META */}
           <div className="pt-4 px-2">
-            <h1 className="text-4xl font-extrabold text-[#1f2937] mb-2">
+            <h1 className="text-4xl font-extrabold mb-2" style={{ color: "var(--text)" }}>
               {post.title}
             </h1>
 
@@ -232,39 +254,89 @@ export default function GadhyaPostPage() {
                     width={48}
                     height={48}
                     alt={writer?.fullName || writer?.penName || "Writer"}
-                    className="rounded-full shadow-md w-12 h-12 object-cover border border-gray-100"
+                    className="rounded-full shadow-md w-12 h-12 object-cover border"
+                    style={{ borderColor: "var(--glass-border)" }}
                   />
                 ) : (
                   <FaUserCircle className="text-gray-400 text-4xl" />
                 )}
 
                 <div>
-                  <p className="text-sm font-semibold text-gray-900 group-hover:text-[#7a1c10] transition">
+                  <p className="text-sm font-semibold transition" style={{ color: "var(--text)" }}>
                     {writer?.penName || writer?.fullName || "लेखक"}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs" style={{ color: "var(--text)" }}>
                     {new Date(post.createdAt || Date.now()).toLocaleDateString("hi-IN", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
                     })}
-                    {" • "} {post.deskLocation || ""}
+                    {" • "} <span style={{ color: "var(--text)" }}>{post.deskLocation || ""}</span>
                   </p>
                 </div>
               </Link>
 
-             
+              {/* Right: Like + Bookmark Count / Buttons (styled) */}
+              <div className="flex items-center gap-4">
+                <ActionButton
+                  icon={FaRegHeart}
+                  filledIcon={FaHeart}
+                  label={formatCount(post.likeCount ?? post.likes?.length ?? 0)}
+                  onClick={handleLike}
+                  isActive={liked}
+                />
+
+                <ActionButton
+                  icon={FaRegBookmark}
+                  filledIcon={FaBookmark}
+                  label={bookmarked ? "सहेजा गया" : "सहेजें"}
+                  onClick={handleBookmark}
+                  isActive={bookmarked}
+                />
+
+                <ActionButton
+                  icon={FaShareAlt}
+                  filledIcon={FaShareAlt}
+                  label="साझा करें"
+                  onClick={handleShare}
+                  isActive={false}
+                />
+              </div>
             </div>
 
-            {/* CONTENT */}
-            <div
-              className="text-[#3f3f46] text-xl leading-8 whitespace-pre-wrap font-medium"
-              dangerouslySetInnerHTML={{ __html: post.content }}
-            />
+            {/* CONTENT — preserve exact plain-text formatting OR render HTML if present */}
+            {(() => {
+              const content = post.content ?? "";
+              if (looksLikeHTML(content)) {
+                // अगर content में HTML टैग दिखते हैं — वही render करें (यदि trusted source हो)
+                return (
+                  <div
+                    className="text-[1.06rem] leading-8 font-medium"
+                    style={{ color: "var(--text)" }}
+                    dangerouslySetInnerHTML={{ __html: content }}
+                  />
+                );
+              } else {
+                // Plain text — preserve all newlines, spaces and special characters exactly
+                return (
+                  <div
+                    className="text-[1.06rem] leading-8 font-medium"
+                    style={{
+                      color: "var(--text)",
+                      whiteSpace: "pre-wrap",      // preserve newlines & multiple spaces
+                      wordBreak: "break-word",     // long words won't overflow
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {content}
+                  </div>
+                );
+              }
+            })()}
 
             {/* AUDIO (if available) */}
             {post.audioUrl || post.audio?.url ? (
-              <div className="mt-6 bg-gray-100 p-4 rounded-xl">
+              <div className="mt-6 bg-[var(--glass)] p-4 rounded-xl" >
                 <audio controls className="w-full">
                   <source src={post.audioUrl ?? post.audio.url} />
                   आपका ब्राउज़र ऑडियो टैग सपोर्ट नहीं करता।
@@ -272,23 +344,24 @@ export default function GadhyaPostPage() {
               </div>
             ) : null}
 
-            {/* VIDEO LINK */}
+            {/* VIDEO Link */}
             {post.videoLink && (
               <a
                 href={post.videoLink}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 bg-[#7a1c10] hover:bg-[#a12717] text-white px-5 py-2.5 rounded-full mt-6"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full mt-6 font-semibold transition-smooth"
+                style={{ backgroundColor: "var(--primary)", color: "var(--bg)", boxShadow: "0 8px 30px rgba(255,107,0,0.12)" }}
               >
                 ▶ वीडियो देखें
               </a>
             )}
 
-            {/* TAGS (if exist) */}
+            {/* TAGS */}
             {Array.isArray(post.tags) && post.tags.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {post.tags.map((t) => (
-                  <span key={t} className="text-xs px-3 py-1 rounded-full border bg-white/60">
+                  <span key={t} className="text-xs px-3 py-1 rounded-full border" style={{ background: "rgba(255,255,255,0.6)", borderColor: "var(--glass-border)", color: "var(--text)" }}>
                     #{t}
                   </span>
                 ))}
@@ -296,56 +369,59 @@ export default function GadhyaPostPage() {
             )}
           </div>
 
-          {/* ACTION BAR */}
-          <div className="flex items-center justify-between border-t border-b py-4 px-2 text-gray-600 text-sm">
+          {/* ACTION BAR (duplicate smaller bar for quick access) */}
+          {/* <div className="flex items-center justify-between border-t border-b py-4 px-2 text-sm" style={{ borderColor: "var(--glass-border)", color: "var(--text)" }}>
             <div className="flex items-center gap-6">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLike}
-                className="flex items-center gap-2 hover:text-red-500"
-              >
-                {liked ? <FaHeart className="text-lg text-red-600" /> : <FaRegHeart className="text-lg" />}
-                <span>{formatCount(post.likeCount ?? post.likes?.length ?? 0)}</span>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={handleLike} className="flex items-center gap-2">
+                {liked ? <FaHeart className="text-primary" style={{ color: "var(--primary)" }} /> : <FaRegHeart />}
+                <span style={{ color: "var(--text)" }}>{formatCount(post.likeCount ?? post.likes?.length ?? 0)}</span>
               </motion.button>
 
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleShare}
-                className="flex items-center gap-2 hover:text-[#7a1c10]"
-              >
+              <motion.button whileTap={{ scale: 0.95 }} onClick={handleShare} className="flex items-center gap-2">
                 <FaShareAlt />
-                <span>साझा करें</span>
+                <span style={{ color: "var(--text)" }}>साझा करें</span>
               </motion.button>
             </div>
 
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleBookmark}
-              className="flex items-center gap-2 border border-[#7a1c10] text-[#7a1c10] hover:text-[#a12717] hover:border-[#a12717] px-4 py-1.5 rounded-full"
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full"
+              style={{
+                color: "var(--primary)",
+                border: "1px solid var(--primary)",
+                background: "transparent",
+              }}
             >
               {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
-              <span>{formatCount(post.bookmarksCount ?? post.bookmarks?.length ?? 0)}</span>
+              <span style={{ color: "var(--primary)" }}>{formatCount(post.bookmarksCount ?? post.bookmarks?.length ?? 0)}</span>
             </motion.button>
-          </div>
+          </div> */}
 
           {/* COMMENTS */}
           <div className="p-2 space-y-6">
-            <h2 className="text-xl font-bold text-[#1f2937]">टिप्पणियाँ ({comments?.length || 0})</h2>
+            <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>टिप्पणियाँ ({comments?.length || 0})</h2>
 
-            <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+            <div style={{ border: "1px solid var(--glass-border)", borderRadius: 12, background: "var(--glass)", padding: 12 }}>
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 rows={2}
                 placeholder="अपनी टिप्पणी लिखें..."
                 className="w-full bg-transparent outline-none resize-none"
+                style={{ color: "var(--text)" }}
               />
               <div className="flex justify-end mt-2">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleAddComment}
                   disabled={!newComment.trim()}
-                  className="bg-[#7a1c10] text-white px-5 py-2 rounded-lg mt-2"
+                  className="px-4 py-2 rounded-md"
+                  style={{
+                    background: "var(--primary)",
+                    color: "var(--bg)",
+                    opacity: !newComment.trim() ? 0.6 : 1,
+                  }}
                 >
                   भेजें
                 </motion.button>
@@ -355,28 +431,30 @@ export default function GadhyaPostPage() {
             {comments && comments.length > 0 ? (
               <div className="space-y-4">
                 {comments.map((c, i) => (
-                  <div key={i} className="flex gap-4 border-b pb-4">
+                  <div key={i} className="flex gap-4 border-b pb-4" style={{ borderColor: "var(--glass-border)" }}>
                     {c.profilePic ? (
                       <Image src={c.profilePic} width={40} height={40} className="rounded-full" alt={c.username} />
                     ) : (
                       <FaUserCircle className="text-gray-400 text-4xl" />
                     )}
                     <div>
-                      <p className="font-bold">{c.username || "User"}</p>
-                      <p className="text-gray-700">{c.commentText}</p>
+                      <p className="font-bold" style={{ color: "var(--text)" }}>{c.username || "User"}</p>
+                      <p style={{ color: "var(--text)" }}>{c.commentText}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-gray-500">अभी कोई टिप्पणी नहीं।</p>
+              <p className="text-center" style={{ color: "var(--text)" }}>अभी कोई टिप्पणी नहीं।</p>
             )}
           </div>
         </div>
 
         {/* RIGHT / SIDEBAR */}
-        <div className="lg:col-span-1 pt-4">
-          <RelatedGadhya poemId={post._id} isSidebar={true} />
+        <div className="lg:col-span-1 ">
+          <div style={{ background: "var(--glass)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 12 }}>
+            <RelatedGadhya poemId={post._id} isSidebar={true} />
+          </div>
         </div>
       </div>
     </main>

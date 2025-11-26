@@ -92,11 +92,15 @@ const RoadmapItem = ({ item, index, onClick }) => {
       onClick={() => onClick(item)}
     >
       <div
-        className={`group relative w-full lg:w-5/12 p-1 shadow-2xl rounded-lg border-4 border-muted-saffron/70 transition-all duration-300 hover:shadow-muted-saffron/70`}
+        className={`group relative w-full lg:w-5/12 p-1 rounded-lg transition-all duration-300`}
         style={{
           boxShadow: isLeft
-            ? "15px 15px 0 0 var(--color-inky-charcoal), 0 0 30px var(--color-muted-saffron)"
-            : "-15px 15px 0 0 var(--color-inky-charcoal), 0 0 30px var(--color-muted-saffron)",
+            ? "15px 15px 0 0 rgba(17,16,19,0.06), 0 0 30px rgba(255,107,0,0.12)"
+            : "-15px 15px 0 0 rgba(17,16,19,0.06), 0 0 30px rgba(255,107,0,0.12)",
+          borderWidth: 1,
+          borderStyle: "solid",
+          borderColor: "var(--primary)",
+          backgroundClip: "padding-box",
         }}
       >
         <div
@@ -104,15 +108,13 @@ const RoadmapItem = ({ item, index, onClick }) => {
           style={{
             backgroundImage: "url('/oldpaper.webp')",
             backgroundSize: "cover",
-            backgroundColor: "var(--color-antique-paper)",
+            backgroundColor: "var(--bg)",
           }}
         >
           <div
-            className={`w-2/5 h-44 overflow-hidden relative ${
-              isLeft ? "order-2" : "order-1"
-            }`}
+            className={`w-2/5 h-44 overflow-hidden relative ${isLeft ? "order-2" : "order-1"}`}
           >
-            <div className="absolute inset-0 bg-inky-charcoal/30 z-10"></div>
+            <div className="absolute inset-0 bg-black/20 z-10 dark:bg-black/30"></div>
             <img
               src={item.image}
               alt={item.title}
@@ -121,25 +123,35 @@ const RoadmapItem = ({ item, index, onClick }) => {
           </div>
 
           <div
-            className={`w-3/5 flex flex-col justify-center p-0 ${
-              isLeft ? "order-1" : "order-2"
-            }`}
+            className={`w-3/5 flex flex-col justify-center p-0 ${isLeft ? "order-1" : "order-2"}`}
           >
-            <h3 className="text-sm font-semibold mb-1 text-muted-saffron tracking-wider uppercase">
+            <h3 className="text-sm font-semibold mb-1 text-gray-700 tracking-wider uppercase font-devanagari">
               {item.era}
             </h3>
-            <h2 className="text-3xl font-playfair-display font-extrabold text-kalighat-red mb-2 border-b border-kalighat-indigo/50 pb-1">
+            <h2 className="text-3xl font-playfair-display font-extrabold mb-2  text-gray-700 border-b border-primary/30 pb-1 font-devanagari">
               {item.title}
             </h2>
-            <p className="text-inky-charcoal text-sm leading-snug line-clamp-5 reading-body font-rozha">
+            <p className="text-gray-700  text-sm leading-snug line-clamp-5 reading-body font-rozha">
               {item.description}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 top-0 h-full w-4 bg-muted-saffron/70 z-0">
-        <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 h-10 w-10 bg-kalighat-red rounded-full border-4 border-antique-paper shadow-2xl"></div>
+      {/* Center timeline column with orange circle node */}
+      <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 top-0 h-full w-4 z-0">
+        {/* vertical track */}
+        <div className="w-full bg-primary/60 rounded" />
+        {/* orange circle centered on this item */}
+        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-primary flex items-center justify-center z-20"
+             style={{
+               border: "4px solid var(--bg)",
+               boxShadow: "0 6px 18px rgba(255,107,0,0.18)",
+             }}
+        >
+          {/* inner small dot for visual depth */}
+          <div className="h-3 w-3 rounded-full bg-white dark:bg-[#141414]" />
+        </div>
       </div>
     </motion.div>
   );
@@ -164,12 +176,12 @@ export default function GadhyaRoadmap() {
           transition={{ duration: 0.8 }}
           className="text-center mb-20 relative py-8 max-w-4xl mx-auto"
         >
-          <div className="absolute inset-0 bg-kalighat-red/90 rounded-lg border-4 border-muted-saffron shadow-xl"></div>
+          <div className="absolute inset-0 rounded-lg border-2" style={{ borderColor: "var(--primary)", backgroundColor: "transparent", boxShadow: "0 10px 30px rgba(255,107,0,0.08)" }}></div>
           <div className="relative z-10">
-            <h1 className="text-6xl font-handwriting font-extrabold text-kalighat-red tracking-wide drop-shadow-lg pb-3 inline-block">
+            <h1 className="text-5xl md:text-6xl font-extrabold text-gray-500 tracking-wide pb-3 inline-block font-devanagari">
               गद्य विधाओं का विकास-क्रम
             </h1>
-            <p className="text-center text-kalighat-indigo mt-3 text-xl leading-8 max-w-4xl mx-auto font-calligraphy">
+            <p className="text-center  dark:text-gray-300 mt-3 text-xl text-primary leading-8 max-w-4xl mx-auto font-devanagari">
               हिंदी साहित्य में गद्य की प्रमुख विधाएँ, उनके उद्भव और विकास के क्रम में यहाँ सचित्र प्रस्तुत हैं।
             </p>
           </div>
@@ -177,15 +189,13 @@ export default function GadhyaRoadmap() {
 
         {/* Roadmap Items */}
         <div className="relative">
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 h-full w-4 bg-muted-saffron z-0 lg:w-2"></div>
+          {/* center vertical line */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-0 h-full w-4 z-0">
+            <div className="w-full bg-primary/50 rounded" />
+          </div>
 
           {vidhaye.map((item, index) => (
-            <RoadmapItem
-              key={item.slug}
-              item={item}
-              index={index}
-              onClick={handleItemClick}
-            />
+            <RoadmapItem key={item.slug} item={item} index={index} onClick={handleItemClick} />
           ))}
         </div>
       </div>

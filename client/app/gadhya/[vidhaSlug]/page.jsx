@@ -44,125 +44,129 @@ export default function VidhaPostListPage({ params }) {
   }, [vidhaSlug]);
 
   return (
-    <div className="min-h-screen bg-[#fffaf0] dark:bg-[#01161e] text-[#1b1b1b] dark:text-gray-100 py-16 px-6 sm:px-10 font-serif transition-colors duration-500">
-      <div className="max-w-7xl mx-auto">
-        {/* 🏷️ Header */}
-        <header className="text-center mb-14">
-          <h1 className="text-5xl md:text-6xl font-bold text-[#7a1c10] dark:text-[#2dd4bf] mb-4 tracking-wide animate-fade-in drop-shadow-[0_0_8px_rgba(45,212,191,0.3)]">
-            {vidhaTitle} संग्रह
-          </h1>
-          <p className="text-lg md:text-xl text-[#6b4f36] dark:text-gray-300 font-body max-w-3xl mx-auto opacity-0 animate-slide-up animation-delay-300">
-            हिंदी गद्य साहित्य के अंतर्गत <strong>{vidhaTitle}</strong> की रचनाओं का संग्रह।
-          </p>
-        </header>
+    <div
+      className="min-h-screen py-16 px-4 sm:px-10 font-serif transition-colors duration-500"
+      style={{
+        backgroundColor: "var(--bg)",
+        color: "var(--text)",
+      }}
+    >
+     <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* 🔄 Loading */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <span className="loading loading-spinner loading-lg text-[#7a1c10] dark:text-[#2dd4bf]"></span>
-            <p className="ml-4 text-lg text-[#6B4F4F] dark:text-gray-400">
-              रचनाएँ लोड हो रही हैं...
-            </p>
-          </div>
-        ) : posts.length > 0 ? (
-          /* 🧾 Posts Grid */
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {posts.map((post, i) => (
-              <Link
-                key={post._id}
-                href={`/gadhya/${vidhaSlug}/${post.slug}`}
-                className="group block rounded-2xl overflow-hidden bg-white dark:bg-[#042f37] 
-                           border border-[#f1e7d3] dark:border-[#0f3a42]
-                           shadow-lg dark:shadow-[0_0_10px_rgba(45,212,191,0.15)]
-                           hover:shadow-2xl hover:dark:shadow-[0_0_20px_#14b8a6]
-                           transition-all duration-300 hover:scale-[1.03] animate-fade-in-up"
-                style={{ animationDelay: `${i * 100}ms` }}
+  {/* HEADER SECTION */}
+  <header className="text-center mb-14 ">
+    <div className="border border-orange-600 p-4 sm:p-6 w-full sm:w-4/5 md:w-3/5 lg:w-1/2 mx-auto flex flex-col justify-center items-center text-center rounded-lg">
+      <h1
+        className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 tracking-wide animate-fade-in"
+        style={{
+          color: "var(--primary)",
+          textShadow: "0 0 10px rgba(255,107,0,0.12)",
+        }}
+      >
+        {vidhaTitle} संग्रह
+      </h1>
+
+      <p
+        className="text-base sm:text-lg md:text-xl leading-7 mt-3 max-w-3xl mx-auto"
+        style={{ color: "var(--text)", opacity: 0.95 }}
+      >
+        हिंदी गद्य साहित्य के अंतर्गत{" "}
+        <strong style={{ color: "var(--primary)" }}>{vidhaTitle}</strong> की रचनाओं का संग्रह।
+      </p>
+    </div>
+  </header>
+
+  {/* POSTS GRID */}
+  <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    {posts.map((post, i) => (
+      <Link
+        key={post._id ?? i}
+        href={`/gadhya/${vidhaSlug}/${post.slug}`}
+        className="group block rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.03] animate-fade-in-up shadow shadow-orange-200 hover:shadow-md hover:shadow-orange-300"
+        style={{
+          backgroundColor: "var(--glass)",
+          border: "1px solid var(--glass-border)",
+          // boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
+        }}
+      >
+        {/* IMAGE */}
+        <div className="relative w-full aspect-[4/3] flex items-center justify-center overflow-hidden bg-white dark:bg-black/20">
+          {post.image?.url ? (
+            <Image
+              src={post.image.url}
+              alt={post.title}
+              fill
+              className="object-contain transition-transform duration-500 group-hover:scale-105"
+              sizes="100vw"
+            />
+          ) : (
+            <div
+              className="flex items-center justify-center w-full h-full font-semibold text-lg p-4"
+              style={{ backgroundColor: "var(--glass)", color: "var(--primary)" }}
+            >
+              {post.title?.slice(0, 30) || "चित्र उपलब्ध नहीं"}
+            </div>
+          )}
+
+          {/* VIDEO BUTTON */}
+          {post.videoLink && (
+            <a
+              href={post.videoLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            >
+              <div
+                className="flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:scale-110 transition-all"
+                style={{ backgroundColor: "var(--primary)", color: "#fff" }}
               >
-                {/* 🖼️ Image */}
-                <div className="relative w-full aspect-[4/3] overflow-hidden">
-                  {post.image?.url ? (
-                    <Image
-                      src={post.image.url}
-                      alt={post.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center w-full h-full bg-[#f3e7db] dark:bg-[#06323a] text-[#7a1c10] dark:text-[#2dd4bf] font-semibold text-lg p-4">
-                      {post.title?.slice(0, 30) || "चित्र उपलब्ध नहीं"}
-                    </div>
-                  )}
+                ▶
+              </div>
+            </a>
+          )}
+        </div>
 
-                  {/* ▶️ Video Button */}
-                  {post.videoLink && (
-                    <a
-                      href={post.videoLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    >
-                      <div className="flex items-center justify-center w-14 h-14 bg-[#2dd4bf] text-white rounded-full shadow-lg hover:bg-[#0891b2] transform hover:scale-110 transition-all">
-                        ▶
-                      </div>
-                    </a>
-                  )}
-                </div>
+        {/* CONTENT */}
+        <div className="p-5">
+          <h2
+            className="text-lg sm:text-xl font-bold mb-2 line-clamp-2 transition-colors"
+            style={{ color: "var(--primary)" }}
+          >
+            {post.title}
+          </h2>
 
-                {/* ✍️ Content */}
-                <div className="p-5">
-                  <h2 className="text-xl font-bold text-[#7a1c10] dark:text-[#2dd4bf] mb-2 group-hover:text-[#14b8a6] transition-colors line-clamp-2">
-                    {post.title}
-                  </h2>
+          <p className="text-sm sm:text-base leading-snug line-clamp-3 mb-3" style={{ color: "var(--text)" }}>
+            {post.content ? post.content.slice(0, 100) + "..." : ""}
+          </p>
 
-                  <p className="text-[#6B4F4F] dark:text-gray-300 text-sm leading-snug line-clamp-3 mb-3">
-                    {post.content?.slice(0, 100)}...
-                  </p>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-[#f1e7d3] dark:border-[#0e474f]">
-                    <p className="text-xs italic text-[#6B4F4F] dark:text-gray-400">
-                      ✍️{" "}
-                      <span className="capitalize text-[#7a1c10] dark:text-[#2dd4bf] font-medium">
-                        {post.isAdminPost &&
-                        (!post.writerId || post.writerId?.fullName === "Admin")
-                          ? "प्रशासन"
-                          : post.writerId?.penName ||
-                            post.writerId?.fullName ||
-                            "अज्ञात"}
-                      </span>
-                    </p>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(post.date).toLocaleDateString("hi-IN", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center mt-20 p-8 bg-white dark:bg-[#042f37] rounded-xl shadow-lg dark:shadow-[0_0_12px_rgba(45,212,191,0.2)] border border-[#F6A44C] dark:border-[#0e474f]">
-            <p className="text-2xl text-[#8b0000] dark:text-[#2dd4bf] font-bold mb-4">
-              क्षमा करें!
+          <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid var(--glass-border)" }}>
+            <p className="text-xs italic" style={{ color: "var(--text)" }}>
+              ✍️{" "}
+              <span className="capitalize font-medium" style={{ color: "var(--primary)" }}>
+                {post.isAdminPost && (!post.writerId || post.writerId?.fullName === "Admin")
+                  ? "प्रशासन"
+                  : post.writerId?.penName || post.writerId?.fullName || "अज्ञात"}
+              </span>
             </p>
-            <p className="text-[#6B4F4F] dark:text-gray-300 text-lg">
-              इस <strong>{vidhaTitle}</strong> विधा में अभी कोई रचनाएँ उपलब्ध नहीं हैं।
-            </p>
+
+            <span className="text-xs" style={{ color: "var(--text)" }}>
+              {post.date
+                ? new Date(post.date).toLocaleDateString("hi-IN", {
+                    month: "short",
+                    day: "numeric",
+                  })
+                : ""}
+            </span>
           </div>
-        )}
-      </div>
+        </div>
+      </Link>
+    ))}
+  </div>
+</div>
+
 
       {/* ✨ Animations */}
       <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
         @keyframes fadeInUp {
           from {
             opacity: 0;
@@ -173,27 +177,8 @@ export default function VidhaPostListPage({ params }) {
             transform: translateY(0);
           }
         }
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fadeIn 1s ease-out forwards;
-        }
         .animate-fade-in-up {
           animation: fadeInUp 0.6s ease-out forwards;
-        }
-        .animate-slide-up {
-          animation: slideUp 0.8s ease-out forwards;
-        }
-        .animation-delay-300 {
-          animation-delay: 0.3s;
         }
       `}</style>
     </div>

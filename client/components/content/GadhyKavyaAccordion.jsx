@@ -14,7 +14,7 @@ import { FiChevronLeft, FiChevronRight, FiTrendingUp } from "react-icons/fi";
 
 export default function GadhyKavyaAccordion({
   items = null,
-  apiEndpoint = "/api/poems/sections/most-liked?limit=4", // default to your sections route
+  apiEndpoint = "/api/poems/sections/most-liked?limit=4",
   autoplay = true,
   interval = 4500,
   className = "",
@@ -34,7 +34,6 @@ export default function GadhyKavyaAccordion({
     img4?.src ?? img4,
   ];
 
-  // map API item -> slide metadata (no image because we use fallbacks)
   const mapToSlide = (p, idx) => {
     const title = p.title || p.attributes?.title || p.name || "";
     const slug =
@@ -90,7 +89,6 @@ export default function GadhyKavyaAccordion({
     };
   };
 
-  // fetch when no items provided
   useEffect(() => {
     let abort = false;
     const controller = new AbortController();
@@ -208,45 +206,52 @@ export default function GadhyKavyaAccordion({
     }
   };
 
-const buildPostHref = (slide) => {
-  const main = (slide.category || "kavya").toLowerCase();
-  const sub = (slide.subcategory || "general").toLowerCase();
-  const slug = (slide.slug || slide.id || "").toLowerCase();
+  const buildPostHref = (slide) => {
+    const main = (slide.category || "kavya").toLowerCase();
+    const sub = (slide.subcategory || "general").toLowerCase();
+    const slug = (slide.slug || slide.id || "").toLowerCase();
 
-  return `/${encodeURIComponent(main)}/${encodeURIComponent(sub)}/${encodeURIComponent(slug)}`;
-};
-  
+    return `/${encodeURIComponent(main)}/${encodeURIComponent(sub)}/${encodeURIComponent(slug)}`;
+  };
+
   const rightImageUrl = img5?.src ?? img5;
 
   // --- RENDER STATES ---
   if (loading) {
     return (
       <div className={`gadhy-kavya-accordion ${className}`}>
-        <div className="w-[96%] lg:w-[88%] mx-auto mb-6 flex items-end justify-between border-b border-gray-200 dark:border-gray-700 pb-3">
+        {/* Header: exact SectionHeader styling, using theme */}
+        <div className="w-[96%] lg:w-[88%] mx-auto mb-6 flex items-end justify-between pb-3  transition-all border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4">
-            <div
-              className="
-                w-14 h-14 rounded-full 
-                bg-amber-50 dark:bg-gradient-to-br dark:from-teal-900 dark:to-purple-900
-                border border-amber-500/80 dark:border-purple-600
-                flex items-center justify-center 
-                shadow-md dark:shadow-[0_0_15px_rgba(80,70,180,0.3)]
-                transition-all duration-500
-              "
-            >
-              <FiTrendingUp className="text-amber-800 dark:text-teal-200 stroke-2" size={24} />
+            <div className="flex-shrink-0">
+              <div
+                className="
+                  w-14 h-14 rounded-full
+                  bg-white dark:bg-[#141414]
+                  border-2 border-primary
+                  flex items-center justify-center
+                  shadow-md shadow-primary/40
+                  transition-all duration-500
+                "
+              >
+                <FiTrendingUp className="text-primary stroke-2" size={24} />
+              </div>
             </div>
 
             <div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">इस हफ़्ते की पसंदीदा रचनाएँ</h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">सबसे बेहतरीन रचनाएँ</p>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-primary tracking-tight font-devanagari">
+                इस हफ़्ते की पसंदीदा रचनाएँ
+              </h2>
+              <p className="mt-1 text-sm md:text-base text-gray-600 dark:text-gray-400 font-devanagari">
+                सबसे बेहतरीन रचनाएँ
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl overflow-hidden">
+        <div className="rounded-2xl overflow-hidden w-[96%] lg:w-[88%] mx-auto">
           <div className="relative h-56 md:h-64 lg:h-72 bg-gray-50 dark:bg-[#0b0b0b] flex items-center justify-center">
-            <div className="animate-spin h-8 w-8 border-4 border-amber-500 border-dashed rounded-full" />
+            <div className="animate-spin h-8 w-8 border-4 rounded-full border-primary border-dashed" />
           </div>
         </div>
       </div>
@@ -257,11 +262,15 @@ const buildPostHref = (slide) => {
     return (
       <div className={`gadhy-kavya-accordion ${className}`}>
         <div className="w-[96%] lg:w-[88%] mx-auto mb-4">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">इस हफ़्ते की पसंदीदा रचनाएँ</h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">सबसे बेहतरीन रचनाएँ</p>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-primary tracking-tight font-devanagari">
+            इस हफ़्ते की पसंदीदा रचनाएँ
+          </h2>
+          <p className="mt-1 text-sm md:text-base text-gray-600 dark:text-gray-400 font-devanagari">
+            सबसे बेहतरीन रचनाएँ
+          </p>
         </div>
 
-        <div className="rounded-2xl overflow-hidden">
+        <div className="rounded-2xl overflow-hidden w-[96%] lg:w-[88%] mx-auto">
           <div className="relative h-56 md:h-64 lg:h-72 bg-gray-50 dark:bg-[#0b0b0b] flex items-center justify-center p-6 text-center">
             <div>
               <div className="text-red-600 font-semibold mb-2">Error loading poems</div>
@@ -278,11 +287,15 @@ const buildPostHref = (slide) => {
     return (
       <div className={`gadhy-kavya-accordion ${className}`}>
         <div className="w-[96%] lg:w-[88%] mx-auto mb-4">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">इस हफ़्ते की पसंदीदा रचनाएँ</h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">सबसे बेहतरीन रचनाएँ</p>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-primary tracking-tight font-devanagari">
+            इस हफ़्ते की पसंदीदा रचनाएँ
+          </h2>
+          <p className="mt-1 text-sm md:text-base text-gray-600 dark:text-gray-400 font-devanagari">
+            सबसे बेहतरीन रचनाएँ
+          </p>
         </div>
 
-        <div className="rounded-2xl overflow-hidden">
+        <div className="rounded-2xl overflow-hidden w-[96%] lg:w-[88%] mx-auto">
           <div className="relative h-56 md:h-64 lg:h-72 bg-gray-50 dark:bg-[#0b0b0b] flex items-center justify-center">
             <div className="text-gray-600 dark:text-gray-300">No poems available.</div>
           </div>
@@ -294,24 +307,29 @@ const buildPostHref = (slide) => {
   // --- NORMAL RENDER ---
   return (
     <div className={`gadhy-kavya-accordion ${className}`}>
+      {/* Header: exact SectionHeader styling, using theme */}
       <div className="w-[96%] lg:w-[88%] mx-auto mb-6 flex items-end justify-between border-b border-gray-200 dark:border-gray-700 pb-3">
         <div className="flex items-center gap-4">
           <div
             className="
-              w-14 h-14 rounded-full 
-              bg-amber-50 dark:bg-gradient-to-br dark:from-teal-900 dark:to-purple-900
-              border border-amber-500/80 dark:border-purple-600
-              flex items-center justify-center 
-              shadow-md dark:shadow-[0_0_15px_rgba(80,70,180,0.3)]
+              w-14 h-14 rounded-full
+              bg-white dark:bg-[#141414]
+              border-2 border-primary
+              flex items-center justify-center
+              shadow-md shadow-primary/40
               transition-all duration-500
             "
           >
-            <FiTrendingUp className="text-amber-800 dark:text-teal-200 stroke-2" size={24} />
+            <FiTrendingUp className="text-primary stroke-2" size={24} />
           </div>
 
           <div>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100">इस हफ़्ते की पसंदीदा रचनाएँ</h2>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">सबसे बेहतरीन रचनाएँ</p>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-primary tracking-tight font-devanagari">
+              इस हफ़्ते की पसंदीदा रचनाएँ
+            </h2>
+            <p className="mt-1 text-sm md:text-base text-gray-600 dark:text-gray-400 font-devanagari">
+              सबसे बेहतरीन रचनाएँ
+            </p>
           </div>
         </div>
       </div>
@@ -342,7 +360,7 @@ const buildPostHref = (slide) => {
                           </p>
                           <div className="mt-2 flex items-center gap-3">
                             {s.slug && (
-                              <Link href={buildPostHref(s)} className="inline-block px-3 py-1 rounded-full bg-amber-400 text-black font-semibold text-xs">
+                              <Link href={buildPostHref(s)} className="inline-block px-3 py-1 rounded-full bg-primary text-black font-semibold text-xs">
                                 Read
                               </Link>
                             )}
@@ -353,12 +371,12 @@ const buildPostHref = (slide) => {
                 )}
               </AnimatePresence>
 
-              {/* Controls */}
+              {/* Controls (arrows) */}
               <button onClick={prev} aria-label="Previous" className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-sm hover:scale-105 transition">
-                <FiChevronLeft />
+                <FiChevronLeft className="text-primary" />
               </button>
               <button onClick={next} aria-label="Next" className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-sm hover:scale-105 transition">
-                <FiChevronRight />
+                <FiChevronRight className="text-primary" />
               </button>
             </div>
           </div>
@@ -370,7 +388,7 @@ const buildPostHref = (slide) => {
                 key={s.id}
                 href={buildPostHref(s)}
                 onClick={() => goTo(s.id)}
-                className={`relative h-16 md:h-20 rounded-md overflow-hidden border transition ${active === s.id ? "border-amber-300" : "border-transparent hover:border-gray-200"}`}
+                className={`relative h-16 md:h-20 rounded-md overflow-hidden border transition ${active === s.id ? "border-primary" : "border-transparent hover:border-gray-200"}`}
               >
                 <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${getImageUrl(idx)}')` }} />
                 <div className="absolute inset-0 bg-black/25" />
@@ -385,64 +403,62 @@ const buildPostHref = (slide) => {
           {/* dots */}
           <div className="mt-2 flex justify-center gap-2">
             {slides.map((s) => (
-              <button key={s.id} onClick={() => goTo(s.id)} className={`w-3 h-3 rounded-full ${active === s.id ? "bg-amber-500 scale-110" : "bg-gray-300"}`} aria-label={`Go to slide ${s.id}`} />
+              <button
+                key={s.id}
+                onClick={() => goTo(s.id)}
+                className={`w-3 h-3 rounded-full transition-transform ${active === s.id ? "bg-primary scale-110" : "bg-gray-300"}`}
+                aria-label={`Go to slide ${s.id}`}
+              />
             ))}
           </div>
         </div>
 
-{/* Right — Poem card with animation + hover */}
-<div className="hidden md:flex md:col-span-1">
-      <div
-        className="group w-full h-80 lg:h-96 rounded-xl shadow-sm border bg-cover border-gray-300 dark:border-gray-800 flex overflow-hidden 
-                   transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl"
-        style={{
-          backgroundImage: `url(${img5.src})`,
-        }}
-      >
-        {/* LEFT — Poem Text Container */}
-        {/* Added 'transition' and 'group-hover:bg-opacity' for the background fade effect */}
-        <div
-          className="w-1/2 h-full p-6 flex flex-col justify-center transition duration-300 
-                     dark:bg-gray-900/60 dark:group-hover:bg-gray-900/80"
-          style={{
-            fontFamily: "'Noto Sans Devanagari', serif",
-            // Added backdrop-filter for a subtle blur behind the text
-     
-          }}
-        >
-          <p style={{ margin: 0, fontWeight: 600, fontSize: "1.15rem", lineHeight: "1.9" }}>
-            तुझे बेहतर बनाने की कोशिश में<br />
-            तुझे ही वक़्त नहीं दे पा रहे हम,<br />
-            माफ़ करना ए-ज़िंदगी<br />
-            तुझे ही जी नहीं पा रहे हम।
-          </p>
-
-          {/* POET NAME: Added 'transition-all', 'translate-y-2 opacity-0' (initial hidden state) and 'group-hover:...' (final visible state) */}
+        {/* Right — Poem card with animation + hover */}
+        <div className="hidden md:flex md:col-span-1">
           <div
-            className="transition-all duration-500 ease-out translate-y-2 group-hover:translate-y-0 group-hover:opacity-100"
+            className="group w-full h-80 lg:h-96 rounded-xl shadow-sm border bg-cover border-gray-300 dark:border-gray-800 flex overflow-hidden 
+                   transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl"
             style={{
-              marginTop: 14,
-              fontSize: "1.2rem",
-              color: "#444",
-              fontWeight: 700,
+              backgroundImage: `url(${img5.src})`,
             }}
           >
-            — गुलज़ार
+            {/* LEFT — Poem Text Container */}
+            <div
+              className="w-1/2 h-full p-6 flex flex-col justify-center transition duration-300 
+                         dark:bg-gray-900/60 dark:group-hover:bg-gray-900/80"
+              style={{
+                fontFamily: "'Noto Sans Devanagari', serif",
+              }}
+            >
+              <p style={{ margin: 0, fontWeight: 600, fontSize: "1.15rem", lineHeight: "1.9" }}>
+                तुझे बेहतर बनाने की कोशिश में<br />
+                तुझे ही वक़्त नहीं दे पा रहे हम,<br />
+                माफ़ करना ए-ज़िंदगी<br />
+                तुझे ही जी नहीं पा रहे हम।
+              </p>
+
+              <div
+                className="transition-all duration-500 ease-out translate-y-2 group-hover:translate-y-0 group-hover:opacity-100"
+                style={{
+                  marginTop: 14,
+                  fontSize: "1.2rem",
+                  color: "#444",
+                  fontWeight: 700,
+                }}
+              >
+                — गुलज़ार
+              </div>
+            </div>
+
+            {/* RIGHT — Image Container */}
+            <div
+              className="w-1/2 h-full bg-cover bg-center"
+              style={{
+                backgroundImage: `url(${img6.src})`,
+              }}
+            ></div>
           </div>
         </div>
-
-        {/* RIGHT — Image Container (This image is still static but part of the layout) */}
-        <div
-          className="w-1/2 h-full bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${img6.src})`,
-          }}
-        ></div>
-
-      </div>
-    </div>
-
-
       </div>
     </div>
   );

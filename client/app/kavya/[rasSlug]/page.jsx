@@ -1,19 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { IoPlaySharp } from "react-icons/io5";
-const useMockParams = () => ({});
-const MockLink = ({ href, className, children }) => (
-  <a href={href} className={className}>
-    {children}
-  </a>
-);
-const MockImage = ({ src, alt, className }) => (
-  <img
-    src={src}
-    alt={alt}
-    className={`absolute inset-0 w-full h-full object-cover ${className}`}
-  />
-);
 
 const titleMap = {
   shringar: "शृंगार रस",
@@ -27,7 +16,6 @@ const titleMap = {
   shant: "शांत रस",
 };
 
-// ✅ API Fetch
 async function getPoemsByRasa(rasSlug) {
   const category = "kavya";
   try {
@@ -38,13 +26,12 @@ async function getPoemsByRasa(rasSlug) {
     if (!res.ok) return [];
     return await res.json();
   } catch (error) {
-    console.error("Error fetching poems:", error);
     return [];
   }
 }
 
 export default function KavyaRasPage({ params }) {
-  const { rasSlug } = params || useMockParams();
+  const { rasSlug } = params || {};
   const [poems, setPoems] = useState([]);
   const [loading, setLoading] = useState(true);
   const rasTitle = titleMap[rasSlug] || rasSlug;
@@ -60,89 +47,98 @@ export default function KavyaRasPage({ params }) {
   }, [rasSlug]);
 
   return (
-    <div className="min-h-screen bg-[#fffaf0] dark:bg-[#01161e] py-16 px-4 sm:px-8 text-[#1b1b1b] dark:text-gray-100 transition-colors duration-500">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <header className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-display font-bold text-[#8C2B2B] dark:text-[#2dd4bf] mb-4 tracking-tight animate-fade-in drop-shadow-[0_0_8px_rgba(45,212,191,0.3)]">
-            {rasTitle} संग्रह
-          </h1>
-          <p className="text-lg md:text-xl text-[#6B4F4F] dark:text-gray-300 font-body max-w-3xl mx-auto opacity-0 animate-slide-up animation-delay-300">
-            भारतीय काव्यशास्त्र में <strong>{rasTitle}</strong> के भावों पर आधारित नवीनतम रचनाएँ।
-          </p>
-        </header>
+    <div className="min-h-screen py-16 px-4 sm:px-10  dark:bg-black text-[#1b1b1b] dark:text-gray-100">
+      <div className="max-w-screen-2xl mx-auto">
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <span className="loading loading-spinner loading-lg text-[#8C2B2B] dark:text-[#2dd4bf]"></span>
-            <p className="ml-4 text-lg text-[#6B4F4F] dark:text-gray-400">
-              कविताएँ लोड हो रही हैं...
+        {/* ===== HEADER ===== */}
+        <header className="text-center mb-14">
+          <div className="border border-orange-600 p-4 sm:p-6 w-full sm:w-4/5 md:w-3/5 lg:w-1/2 mx-auto rounded-xl">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-wide"
+              style={{
+                color: "var(--primary)",
+                textShadow: "0 0 10px rgba(255,107,0,0.12)",
+              }}
+            >
+              {rasTitle} संग्रह
+            </h1>
+
+            <p className="text-base sm:text-lg md:text-xl mt-7 leading-7"
+              style={{ color: "var(--text)", opacity: 0.95 }}
+            >
+              भारतीय काव्यशास्त्र में <strong style={{ color: "var(--primary)" }}>{rasTitle}</strong> के भावों पर आधारित नवीनतम रचनाएँ।
             </p>
           </div>
+        </header>
+
+        {/* ===== LOADER ===== */}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <span className="loading loading-spinner loading-lg text-orange-600"></span>
+          </div>
         ) : poems.length > 0 ? (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+
+          /* ===== GRID CARDS ===== */
+          <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {poems.map((poem, index) => (
-              <MockLink
+              <Link
                 href={`/kavya/${rasSlug}/${poem.slug}`}
                 key={poem._id}
-                className="group block rounded-2xl overflow-hidden bg-white dark:bg-[#042f37] 
-                           border border-[#f1e7d3] dark:border-[#0f3a42]
-                           shadow-lg dark:shadow-[0_0_10px_rgba(45,212,191,0.15)]
-                           hover:shadow-2xl hover:dark:shadow-[0_0_20px_#14b8a6]
-                           transition-all duration-300 hover:scale-[1.03] animate-fade-in-up"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="group block rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.03] shadow shadow-orange-200 hover:shadow-md hover:shadow-orange-300"
+                style={{
+                  backgroundColor: "var(--glass)",
+                  border: "1px solid var(--glass-border)",
+                  // boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+                  animationDelay: `${index * 120}ms`,
+                }}
               >
-                {/* ✅ Image Section */}
-                <div className="relative w-full aspect-[4/3] overflow-hidden sm:aspect-[16/10]">
+                <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] overflow-hidden ">
                   {poem.image?.url ? (
-                    <MockImage
+                    <Image
                       src={poem.image.url}
                       alt={poem.title}
-                      className="group-hover:scale-105 transition-transform duration-500"
+                      fill
+                      className="object-contain group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="flex items-center justify-center w-full h-full bg-[#f3e7db] dark:bg-[#06323a] text-[#7a1c10] dark:text-[#2dd4bf] font-semibold text-lg p-4">
-                      {poem.title?.slice(0, 30) || "चित्र उपलब्ध नहीं"}
+                    <div className="flex items-center justify-center h-full w-full text-lg font-bold p-4"
+                      style={{ color: "var(--primary)" }}
+                    >
+                      {poem.title.slice(0, 35)}
                     </div>
                   )}
 
-                  {/* ▶️ Play Button (Updated — same as previous code) */}
                   {poem.videoLink && (
-                    <a
-                      href={poem.videoLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    >
-                      <div className="flex items-center justify-center w-14 h-14 bg-[#2dd4bf] text-white rounded-full shadow-lg hover:bg-[#0891b2] hover:shadow-[0_0_15px_#14b8a6] transform hover:scale-110 transition-all duration-300">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-3xl
+                      bg-orange-600 shadow-xl hover:scale-110 transition-all">
                         <IoPlaySharp />
-
                       </div>
-                    </a>
+                    </div>
                   )}
                 </div>
 
-                {/* 📝 Content */}
                 <div className="p-5">
-                  <h2 className="text-xl font-display font-bold text-[#8C2B2B] dark:text-[#2dd4bf] mb-2 group-hover:text-[#14b8a6] transition-colors line-clamp-2">
+                  <h2
+                    className="text-xl font-bold mb-2 line-clamp-2"
+                    style={{ color: "var(--primary)" }}
+                  >
                     {poem.title}
                   </h2>
 
-                  <p className="text-[#6B4F4F] dark:text-gray-300 text-sm leading-snug line-clamp-3 mb-3">
-                    {poem.content?.slice(0, 100)}...
+                  <p className="text-sm leading-snug line-clamp-3 mb-3" style={{ color: "var(--text)" }}>
+                    {poem.content?.slice(0, 120)}...
                   </p>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-[#f1e7d3] dark:border-[#0e474f]">
-                    <p className="text-xs italic text-[#6B4F4F] dark:text-gray-400">
-                      ✍️ लेखक:{" "}
-                      <span className="capitalize text-[#8C2B2B] dark:text-[#2dd4bf] font-medium">
-                        {poem.writerId?.penName ||
-                          poem.writerId?.fullName ||
-                          "अज्ञात"}
+                  <div className="flex justify-between items-center pt-2"
+                    style={{ borderTop: "1px solid var(--glass-border)" }}
+                  >
+                    <p className="text-xs italic" style={{ color: "var(--text)" }}>
+                      ✍️ <span className="font-medium capitalize" style={{ color: "var(--primary)" }}>
+                        {poem.writerId?.penName || poem.writerId?.fullName || "अज्ञात"}
                       </span>
                     </p>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+
+                    <span className="text-xs" style={{ color: "var(--text)" }}>
                       {new Date(poem.createdAt).toLocaleDateString("hi-IN", {
                         month: "short",
                         day: "numeric",
@@ -150,64 +146,20 @@ export default function KavyaRasPage({ params }) {
                     </span>
                   </div>
                 </div>
-              </MockLink>
+              </Link>
             ))}
           </div>
         ) : (
-          <div className="text-center mt-20 p-8 bg-white dark:bg-[#042f37] rounded-xl shadow-lg dark:shadow-[0_0_12px_rgba(45,212,191,0.2)] border border-[#F6A44C] dark:border-[#0e474f]">
-            <p className="text-2xl text-[#8b0000] dark:text-[#2dd4bf] font-bold mb-4">
-              क्षमा करें!
-            </p>
-            <p className="text-[#6B4F4F] dark:text-gray-300 text-lg">
+
+          /* ===== EMPTY MESSAGE ===== */
+          <div className="text-center mt-20 p-10 rounded-xl border border-orange-600">
+            <p className="text-2xl font-bold" style={{ color: "var(--primary)" }}>क्षमा करें!</p>
+            <p className="text-lg" style={{ color: "var(--text)" }}>
               इस <strong>{rasTitle}</strong> रस में अभी कोई रचनाएँ उपलब्ध नहीं हैं।
             </p>
           </div>
         )}
       </div>
-
-      {/* ✨ Animations */}
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fadeIn 1s ease-out forwards;
-        }
-        .animate-slide-up {
-          animation: slideUp 0.8s ease-out forwards;
-        }
-        .animate-fade-in-up {
-          animation: fadeInUp 0.5s ease-out forwards;
-        }
-        .animation-delay-300 {
-          animation-delay: 0.3s;
-        }
-      `}</style>
     </div>
   );
 }

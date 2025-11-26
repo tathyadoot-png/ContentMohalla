@@ -2,185 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---------------------------- */
-/* FONTS                        */
-/* ---------------------------- */
+/* GOOGLE FONTS */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
 
-/* ---------------------------- */
-/* ROOT VARIABLES               */
-/* ---------------------------- */
-:root {
-  --bg-color: #ffffff;
-  --text-color: #111013;
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.5);
-
-  /* Light Accent: ORANGE */
-  --primary-color: #ff6b00;
-  --primary-glow: rgba(255, 107, 0, 0.5);
-  
-  /* Button Variables Light */
-  --btn-bg: #ffffff;
-  --btn-text: #ff7a00;
-  --btn-border: #ff7a00;
-  --btn-hover: #ff7a00;
-  --btn-text-hover: #ffffff;
-  --btn-shadow: rgba(255, 123, 0, 0.4);
+/* THEME VARIABLES - single source of truth */
+:root{
+  --primary: #ff6b00;        /* Orange */
+  --primary-600: #ff7a00;
+  --bg: #ffffff;
+  --text: #111013;
+  --glass: rgba(255,255,255,0.7);
+  --glass-border: rgba(0,0,0,0.06);
+  --btn-shadow: rgba(255,123,0,0.28);
 }
 
 .dark {
-  --bg-color: #0a0f0f;
-  --text-color: #ffffff;
-  --glass-bg: rgba(10, 15, 15, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-
-  /* Dark Accent: SAME ORANGE THEME */
-  --primary-color: #ff6b00;
-  --primary-glow: rgba(255, 107, 0, 0.5);
-
-  /* Button Variables Dark (Orange) */
-  --btn-bg: #0a0f0f;
-  --btn-text: #ff7a00;
-  --btn-border: #ff7a00;
-  --btn-hover: #ff7a00;
-  --btn-text-hover: #000000;
-  --btn-shadow: rgba(255, 123, 0, 0.4);
+  --bg: #000000;
+  --text: #ffffff;
+  --glass: rgba(0,0,0,0.6);
+  --glass-border: rgba(255,255,255,0.06);
+  /* primary remains same orange */
 }
 
-body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  transition: background-color 0.5s ease, color 0.5s ease;
-}
-
-/* ---------------------------- */
-/* CUSTOM BUTTON (btn-style5)   */
-/* ---------------------------- */
-.btn-style5 {
-  position: relative;
-  padding: 6px 21px;
-  border-radius: 99px; /* Pill shape looks more modern */
-  font-weight: 700;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border: 2px solid var(--btn-border);
-  background: var(--btn-bg);
-  color: var(--btn-text);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy transition */
-  overflow: hidden;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-/* Hover Effects */
-.btn-style5:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 10px 25px var(--btn-shadow);
-  background: var(--btn-hover);
-  color: var(--btn-text-hover);
-  border-color: var(--btn-hover);
-}
-
-.btn-style5:active {
-  transform: translateY(-1px);
-}
-
-/* Shine Effect */
-.btn-style5::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -120%;
-  width: 60%;
+/* base */
+html,body,#root {
   height: 100%;
-  background: rgba(255, 255, 255, 0.4);
-  transform: skewX(-20deg);
-  transition: all 0.5s ease;
-  z-index: -1;
+}
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: var(--text);
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
-.btn-style5:hover::after {
-  left: 120%;
-  transition-duration: 0.7s;
-}
+/* small helpers (use in components) */
+.text-primary { color: var(--primary) !important; }
+.bg-primary { background: var(--primary) !important; }
+.border-primary { border-color: var(--primary) !important; }
+.hover-primary:hover { background: var(--primary) !important; color: #fff !important; }
 
-/* ---------------------------- */
-/* ANIMATED NAV LINK            */
-/* ---------------------------- */
+/* nav link animation */
 .nav-link-item {
   position: relative;
-  padding: 5px 0;
-  font-weight: 500;
-  transition: color 0.3s ease;
+  padding-bottom: 4px;
+  font-weight: 600;
 }
-
-.nav-link-item::before {
-  content: '';
+.nav-link-item::after{
+  content: "";
   position: absolute;
-  width: 100%;
-  height: 2px;
-  bottom: 0;
   left: 0;
-  background-color: var(--primary-color);
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--primary);
   transform: scaleX(0);
-  transform-origin: bottom right;
-  transition: transform 0.3s ease-out;
-  box-shadow: 0 0 8px var(--primary-glow);
+  transform-origin: right;
+  transition: transform .28s cubic-bezier(.2,.9,.2,1);
+  opacity: 0.95;
+  border-radius: 2px;
+}
+.nav-link-item:hover::after { transform: scaleX(1); transform-origin: left; }
+.nav-link-item:hover { color: var(--primary); }
+
+/* custom btn */
+.btn-style5{
+  position: relative;
+  padding: 8px 20px;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 2px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+}
+.btn-style5:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px var(--btn-shadow);
+  background: var(--primary);
+  color: #fff;
 }
 
-.nav-link-item:hover::before {
-  transform: scaleX(1);
-  transform-origin: bottom left;
-}
+/* thin orange line */
+.thin-orange-line{ height: 1px; width: 100%; background: rgba(255,107,0,0.12);  }
 
-.nav-link-item:hover {
-  color: var(--primary-color);
-  text-shadow: 0 0 15px var(--primary-glow);
-}
-/* DARK MODE FIX FOR NAV LINKS */
-.dark .nav-link-item {
-  color: #ffffff !important;         /* White */
-  /* Agar light orange chahiye: #ffb066 */
-}
+/* hide scrollbar utility */
+.hide-scrollbar::-webkit-scrollbar{ display:none; }
+.hide-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }
 
-.dark .nav-link-item:hover {
-  color: #ff7a00 !important;         /* Orange hover */
-}
+/* global transition utility */
+.transition-smooth { transition: all .35s cubic-bezier(.2,.9,.2,1); }
 
-/* ---------------------------- */
-/* UTILS                        */
-/* ---------------------------- */
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--glass-border);
-}
-
-.text-glow {
-  text-shadow: 0 0 20px var(--primary-glow);
-}
-
-
-
-.nav-social-icon {
-  color: var(--text-muted);
-  transition: 0.3s ease;
-}
-
-.nav-social-icon:hover {
-  color: var(--primary-color);
-  text-shadow: 0 0 10px var(--primary-glow);
-  transform: scale(1.15);
-}
-/* Custom Thin Orange Line */
-.thin-orange-line {
-  @apply w-full h-[0.1px] bg-orange-200 dark:bg-orange-500;
-}
+/* GSAP reveal helper (no styles required, used as selector) */
+.gsap-reveal { opacity: 0; transform: translateY(24px); }

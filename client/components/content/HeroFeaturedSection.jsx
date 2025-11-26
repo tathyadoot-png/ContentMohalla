@@ -49,39 +49,44 @@ export default function FeaturedPoemsSimple({
     >
       <div className="max-w-full mx-auto px-4">
         {/* ===== Header (matches HomeSections width & style) ===== */}
-        <div className="w-[96%] lg:w-[88%] mx-auto md:pt-2 pt-4 flex items-end justify-between border-b border-gray-200 dark:border-gray-700 pb-3 mb-6 transition-all">
-          <div className="flex items-center gap-4">
-            <div className="flex-shrink-0">
-              <div
-                className="
-                  w-14 h-14 rounded-full 
-                  bg-amber-50
-                  border border-amber-500/80
-                  flex items-center justify-center 
-                  shadow-md
-                  transition-all duration-500
-                "
-              >
-                <FiTrendingUp
-                  className="text-amber-800 stroke-2"
-                  size={24}
-                />
-              </div>
-            </div>
+{/* ===== EXACT SectionHeader style heading (theme-safe) ===== */}
+<div className="w-[96%] lg:w-[88%] mx-auto md:pt-6 pt-8 flex items-end justify-between pb-3 mb-3 transition-all">
+  <div className="flex items-center gap-4">
 
-            <div>
-              <h2
-                className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight tracking-tight"
-                style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}
-              >
-               Indian Poetic Heritage
-              </h2>
-              <p className="mt-1 text-sm md:text-base text-gray-600 font-medium">
-                Handpicked — क्लासिक पद
-              </p>
-            </div>
-          </div>
-        </div>
+    <div className="flex-shrink-0">
+      <div
+        className="
+          w-14 h-14 rounded-full
+          bg-white dark:bg-[#141414]
+          border-2 border-primary
+          flex items-center justify-center
+          shadow-md shadow-primary/40
+          transition-all duration-500
+        "
+      >
+        <FiTrendingUp className="text-primary stroke-2" size={24} />
+      </div>
+    </div>
+
+    <div>
+      <h2
+        className="
+          text-xl sm:text-2xl md:text-3xl
+          font-bold
+          text-primary
+          tracking-tight
+          font-devanagari
+        "
+      >
+        भारतीय काव्य परंपरा
+      </h2>
+
+      <p className="mt-1 text-sm md:text-base text-gray-600 dark:text-gray-400 font-devanagari">
+        हमारी विरासत
+      </p>
+    </div>
+  </div>
+</div>
 
         {/* ===== Grid: 3 equal columns on md+; cards full-width inside each column ===== */}
         <div className="w-[96%] lg:w-[88%] mx-auto">
