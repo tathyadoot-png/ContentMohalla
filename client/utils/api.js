@@ -2,7 +2,7 @@
 
 // FIX: Now reading the guaranteed server-side variable defined in next.config.js
 // If STRAPI_BASE_URL is not set, it defaults to the local Strapi API path.
-const STRAPI_API_URL = process.env.STRAPI_BASE_URL || 'http://localhost:1337/api';
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 /**
  * Strapi JSON response mein se 'data' aur 'attributes' nesting ko hatane ke liye helper function.

@@ -28,29 +28,27 @@ export default function PoetrySiteLogin() {
 
     setLoading(true);
     try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${API_BASE}/api/auth/login`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(form),
-  credentials: "include", // 👈 important for cookies
-});
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+        credentials: "include", // 👈 important for cookies
+      });
 
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.message || "Login failed");
 
-     // token cookies me aa rahi hai because credentials: "include"
-console.log("Logged in via cookies");
+      // token cookies me aa rahi hai because credentials: "include"
+      console.log("Logged in via cookies");
 
-   
       setSuccess("लॉगिन सफल हुआ! स्वागत है।");
 
       // Redirect to dashboard (if needed)
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
-
     } catch (err) {
       console.error(err);
       setError("लॉगिन असफल रहा, कृपया सही जानकारी दर्ज करें।");
@@ -60,38 +58,55 @@ console.log("Logged in via cookies");
   }
 
   return (
-    <div className="min-h-full my-10 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white shadow-xl rounded-2xl overflow-hidden border border-[#e3caca]">
+    <div className="min-h-full my-10 flex items-center justify-center px-4">
+      <div
+        className="
+          max-w-md w-full rounded-2xl overflow-hidden
+          border transition-colors shadow-md shadow-orange-300 hover:shadow-lg hover:shadow-orange-400 
+          bg-white dark:bg-black
+          
+        "
+      >
         <div className="p-10 text-center">
-          <h2 className="text-3xl font-extrabold text-[#8B1E3F]">
+          <h2 className="text-2xl font-extrabold text-gray-700 dark:text-primary">
             साहित्य परिवार में पुनः स्वागत है
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
             कृपया अपने खाते में लॉगिन करें और अपनी रचनाएँ साझा करें।
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4 text-left">
             <label className="block">
-              <span className="text-sm text-gray-700">ईमेल</span>
+              <span className="text-sm text-primary">ईमेल</span>
               <input
                 name="email"
                 type="email"
                 value={form.email}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-[#8B1E3F] p-2"
+                className="
+                  mt-1 block w-full rounded-lg p-2
+                  bg-white dark:bg-[#071014] text-gray-900 dark:text-gray-100
+                  border border-[rgba(255,107,0,0.20)] dark:border-[rgba(255,107,0,0.28)]
+                  shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
+                "
                 placeholder="example@gmail.com"
                 required
               />
             </label>
 
             <label className="block">
-              <span className="text-sm text-gray-700">पासवर्ड</span>
+              <span className="text-sm text-primary ">पासवर्ड</span>
               <input
                 name="password"
                 type="password"
                 value={form.password}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-[#8B1E3F] p-2"
+                className="
+                  mt-1 block w-full rounded-lg p-2
+                  bg-white dark:bg-[#071014] text-gray-900 dark:text-gray-100
+                  border border-[rgba(255,107,0,0.20)] dark:border-[rgba(255,107,0,0.28)]
+                  shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
+                "
                 placeholder="पासवर्ड"
                 required
               />
@@ -103,24 +118,26 @@ console.log("Logged in via cookies");
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#8B1E3F] hover:bg-[#a42a4c] text-white py-2 rounded-lg font-semibold shadow-md"
+              className="
+                w-full py-2 rounded-lg font-semibold shadow-md
+               bg-orange-400
+                 hover:bg-orange-500 text-white
+                disabled:opacity-60 disabled:cursor-not-allowed
+                transition
+              "
             >
               {loading ? "लॉगिन जारी है..." : "लॉगिन करें"}
             </button>
           </form>
 
-          <p className="mt-6 text-sm text-gray-500">
+          <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
             नया सदस्य हैं?{" "}
-            <a href="/register" className="text-[#8B1E3F] underline">
+            <a href="/register" className="text-primary underline">
               यहाँ पंजीकरण करें
             </a>
           </p>
 
-          <p className="mt-3 text-xs text-gray-400">
-            <a href="/forgot-password" className="hover:text-[#8B1E3F] underline">
-              पासवर्ड भूल गए?
-            </a>
-          </p>
+          
         </div>
       </div>
     </div>

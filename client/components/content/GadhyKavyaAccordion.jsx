@@ -446,7 +446,7 @@ export default function GadhyKavyaAccordion({
                   fontWeight: 700,
                 }}
               >
-                — गुलज़ार
+                — गुलज़ार (Meesho से)
               </div>
             </div>
 

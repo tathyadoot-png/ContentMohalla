@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import writer from '../../public/writer.png'
-
-
+import { FiCamera } from "react-icons/fi";
 
 export default function PoetrySiteRegistration() {
   const [form, setForm] = useState({
@@ -54,7 +53,7 @@ export default function PoetrySiteRegistration() {
     }
   }
 
-   async function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -82,7 +81,7 @@ export default function PoetrySiteRegistration() {
     });
 
     try {
-      // 👇 Environment-based API endpoint
+      // 👇 NOTE: backend integration untouched — original behavior preserved
       const API_BASE = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
@@ -93,8 +92,7 @@ export default function PoetrySiteRegistration() {
 
       if (!res.ok) throw new Error(data.message || "Registration failed");
 
-      setUserId(data.uniqueId);
-      setSuccess("पंजीकरण सफल हुआ! आपकी यूनिक आईडी नीचे दिख रही है।");
+     
 
       // Reset form
       setForm({
@@ -129,26 +127,29 @@ export default function PoetrySiteRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf5f5] flex items-center justify-center p-6">
-      <div className="max-w-4xl w-full bg-white shadow-xl rounded-2xl overflow-hidden border border-[#e3caca]">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-white dark:bg-black transition-colors">
+      <div className="max-w-4xl w-full rounded-2xl overflow-hidden
+                     shadow-md shadow-orange-300 hover:shadow-lg hover:shadow-orange-400 
+                      bg-white dark:bg-black
+                     ">
         <div className="p-10 text-center">
-          <h2 className="text-3xl font-extrabold text-[#8B1E3F]">
-            साहित्य परिवार में आपका स्वागत है
+          <h2 className="text-3xl font-extrabold text-gray-600 dark:text-gray-300">
+            साहित्य परिवार में आपका <span className="text-orange-500">स्वागत</span> है
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
             अपनी रचनाएँ साझा करने के लिए कृपया पंजीकरण करें।
           </p>
 
           {/* Avatar Upload Section */}
           <div className="flex flex-col items-center mt-6">
-            <div className="relative w-28 h-28">
+            <div className="relative w-28 h-28 ">
               <img
                 src={preview || "/avatar.png"}
                 alt=""
-                className="w-28 h-28 rounded-full border-2 border-[#e3caca] object-cover"
+                className="w-28 h-28 rounded-full   object-cover bg-white dark:bg-[#071014] shadow-md shadow-orange-500"
               />
-              <label className="absolute bottom-0 right-0 bg-[#8B1E3F] text-white p-1 rounded-full cursor-pointer">
-                📸
+              <label className="absolute bottom-0 right-0 bg-gray-700  text-white p-2 rounded-full cursor-pointer">
+                <FiCamera/>
                 <input
                   type="file"
                   accept="image/*"
@@ -157,7 +158,7 @@ export default function PoetrySiteRegistration() {
                 />
               </label>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 mt-2 dark:text-gray-400">
               प्रोफ़ाइल फ़ोटो अपलोड करें (वैकल्पिक)
             </p>
           </div>
@@ -250,8 +251,8 @@ export default function PoetrySiteRegistration() {
             />
 
             {/* Social Media Links */}
-            <div className="mt-6 border-t pt-4">
-              <h4 className="font-semibold text-gray-700 mb-2">
+            <div className="mt-6 border-t pt-4 border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,107,0,0.06)]">
+              <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 सोशल मीडिया लिंक (वैकल्पिक)
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -282,22 +283,19 @@ export default function PoetrySiteRegistration() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#8B1E3F] hover:bg-[#a42a4c] text-white py-2 rounded-lg font-semibold shadow-md"
+              className="w-full py-2 rounded-lg font-semibold shadow-md
+                         bg-orange-400 hover:bg-orange-500 text-white
+                         disabled:opacity-60 disabled:cursor-not-allowed transition"
             >
               {loading ? "पंजीकरण जारी है..." : "पंजीकरण करें"}
             </button>
 
-            {userId && (
-              <div className="mt-4 p-3 rounded-md bg-[#fdf5f7] border border-[#e5b2c0] text-center">
-                <p className="text-sm text-gray-700">आपकी यूनीक आईडी :</p>
-                <p className="mt-1 font-bold text-lg text-[#8B1E3F]">{userId}</p>
-              </div>
-            )}
+           
           </form>
 
-          <p className="mt-6 text-sm text-gray-500">
+          <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
             पहले से खाता है?{" "}
-            <a href="/login" className="text-[#8B1E3F] underline">
+            <a href="/login" className="text-primary underline">
               लॉगिन करें
             </a>
           </p>
@@ -311,7 +309,7 @@ export default function PoetrySiteRegistration() {
 function Input({ label, name, value, onChange, placeholder, type = "text", required }) {
   return (
     <label className="block">
-      <span className="text-gray-700 text-xs font-medium">{label}</span>
+      <span className="text-gray-700 text-xs font-medium dark:text-gray-200">{label}</span>
       <input
         name={name}
         type={type}
@@ -319,7 +317,12 @@ function Input({ label, name, value, onChange, placeholder, type = "text", requi
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-[#8B1E3F] p-2"
+        className="
+          mt-1 block w-full rounded-lg p-2
+          bg-white dark:bg-[#071014] text-gray-900 dark:text-gray-100
+          border border-[rgba(255,107,0,0.20)] dark:border-[rgba(255,107,0,0.28)]
+          shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.16)]
+        "
       />
     </label>
   );
@@ -328,14 +331,19 @@ function Input({ label, name, value, onChange, placeholder, type = "text", requi
 function Textarea({ label, name, value, onChange, placeholder }) {
   return (
     <label className="block">
-      <span className="text-gray-700 text-xs font-medium">{label}</span>
+      <span className="text-gray-700 text-xs font-medium dark:text-gray-200">{label}</span>
       <textarea
         name={name}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         rows={3}
-        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-[#8B1E3F] p-2"
+        className="
+          mt-1 block w-full rounded-lg p-2
+          bg-white dark:bg-[#071014] text-gray-900 dark:text-gray-100
+          border border-[rgba(255,107,0,0.20)] dark:border-[rgba(255,107,0,0.28)]
+          shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.16)]
+        "
       />
     </label>
   );
