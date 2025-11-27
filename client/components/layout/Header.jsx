@@ -196,7 +196,7 @@ export default function Header({ theme, toggleTheme }) {
         <div className="text-primary font-semibold"></div>
 
         <div className="flex items-center gap-3 text-primary text-lg">
-          <div className="text-primary font-semibold">Email us : Contentmohalla@gmail.com</div>
+          <div className="text-primary font-semibold">Email us : contentmohalla@gmail.com</div>
           <a href="#" className="border-primary border p-1 rounded-full hover-primary transition">
             <FaFacebookF />
           </a>
