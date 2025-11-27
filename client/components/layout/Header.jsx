@@ -197,16 +197,16 @@ export default function Header({ theme, toggleTheme }) {
 
         <div className="flex items-center gap-3 text-primary text-lg">
           <div className="text-primary font-semibold">Email us : contentmohalla@gmail.com</div>
-          <a href="#" className="border-primary border p-1 rounded-full hover-primary transition">
+          <a href="https://www.facebook.com/Contentmohalla?rdid=cxcamsY8mPd8MzCM&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1GasTNtAaF%2F#" className="border-primary border p-1 rounded-full hover-primary transition">
             <FaFacebookF />
           </a>
-          <a href="#" className="border-primary border p-1 rounded-full hover-primary transition">
+          <a href="https://www.instagram.com/content_mohalla/?igsh=MW5iYmp2dm03bmZsNg%3D%3D#" className="border-primary border p-1 rounded-full hover-primary transition">
             <FaInstagram />
           </a>
-          <a href="#" className="border-primary border p-1 rounded-full hover-primary transition">
+          <a href="https://x.com/contentmohalla?t=X3ekB2-Pbr9V-6T2LXuo4w&s=08" className="border-primary border p-1 rounded-full hover-primary transition">
             <FaTwitter />
           </a>
-          <a href="#" className="border-primary border p-1 rounded-full hover-primary transition">
+          <a href="https://www.youtube.com/@contentmohalla3" className="border-primary border p-1 rounded-full hover-primary transition">
             <FaYoutube />
           </a>
         </div>
