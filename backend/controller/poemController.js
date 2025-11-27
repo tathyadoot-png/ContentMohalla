@@ -973,22 +973,20 @@ export const getMyPoems = async (req, res) => {
 
 export const searchPoems = async (req, res) => {
   try {
-    let q = req.query.q?.trim().toLowerCase();
+    // normalize query
+    let q = req.query.q?.trim();
     if (!q) {
       return res.json({ success: true, poems: [], writers: [] });
     }
 
-    // English normalize
-    const normalizedQ = Transliterate(q).toLowerCase();
+    // keep original & normalized variants
+    const qLower = q.toLowerCase();
+    const normalizedQ = (Transliterate(q) || "").toLowerCase();
+    const hindiFromEng = engToHindi ? engToHindi(q) : "";
+    const variants = [qLower, normalizedQ, hindiFromEng].filter(Boolean);
 
-    // English → Hindi conversion
-    const hindiFromEng = engToHindi(q);
-
-    // all variants to search
-    const variants = [q, normalizedQ, hindiFromEng];
-
-    // poems search
-    const poems = await Poem.find({
+    // ----- POEMS: find + populate writerId -----
+    const poemsRaw = await Poem.find({
       $or: variants.flatMap((v) => [
         { title: { $regex: v, $options: "i" } },
         { content: { $regex: v, $options: "i" } },
@@ -996,17 +994,35 @@ export const searchPoems = async (req, res) => {
       ]),
     })
       .limit(6)
-      .select("title slug image createdAt");
+      .select("title slug image createdAt writerId")
+      .populate({ path: "writerId", select: "fullName penName" });
 
-    // writers search
-    const writers = await User.find({
+    const poems = (poemsRaw || []).map((p) => ({
+      _id: p._id,
+      title: p.title,
+      slug: p.slug,
+      image: p.image?.url || (p.image && p.image.url) || "",
+      createdAt: p.createdAt,
+      // canonical writerName field for frontend
+      writerName: (p.writerId && (p.writerId.fullName || p.writerId.penName)) || "",
+    }));
+
+    // ----- WRITERS: ensure canonical fields & fallbacks -----
+    const writersRaw = await User.find({
       $or: variants.flatMap((v) => [
         { fullName: { $regex: v, $options: "i" } },
         { penName: { $regex: v, $options: "i" } },
       ]),
     })
       .limit(6)
-      .select("fullName penName avatar");
+      .select("fullName penName avatar name username");
+
+    const writers = (writersRaw || []).map((w) => ({
+      _id: w._id,
+      fullName: (w.fullName || w.name || w.username || "").trim(),
+      penName: (w.penName || "").trim(),
+      avatar: w.avatar || "",
+    }));
 
     return res.json({
       success: true,
