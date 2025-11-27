@@ -12,9 +12,12 @@ import {
   FaSun,
   FaMoon,
   FaUserCircle,
+  FaFacebookF,
+  FaInstagram,
+  FaTwitter,
+  FaYoutube,
 } from "react-icons/fa";
 
-import { FaFacebookF, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
 import SearchOverlay from "../content/SearchOverlay";
 import logo from "../../public/logo.png";
 import { LuBookmarkPlus } from "react-icons/lu";
@@ -30,12 +33,12 @@ const navItems = [
 ];
 
 export default function Header({ theme, toggleTheme }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // mobile nav
   const [user, setUser] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Change this to adjust when header should switch styles (in px)
   const SCROLL_THRESHOLD = 60;
+  const EMAIL = "contentmohalla@gmail.com";
 
   useEffect(() => {
     const checkUser = async () => {
@@ -54,18 +57,10 @@ export default function Header({ theme, toggleTheme }) {
   }, []);
 
   useEffect(() => {
-    // add scroll listener to toggle isScrolled
     const onScroll = () => {
-      if (window.scrollY > SCROLL_THRESHOLD) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > SCROLL_THRESHOLD);
     };
-
-    // run once to set initial state (useful on page refresh with scroll)
     if (typeof window !== "undefined") onScroll();
-
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -81,96 +76,100 @@ export default function Header({ theme, toggleTheme }) {
 
   return (
     <>
+      {/* MAIN HEADER */}
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? "backdrop-blur-sm bg-white/80 dark:bg-black/70 shadow-md" : "bg-transparent"
+        className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? "backdrop-blur-sm bg-white/85 dark:bg-black/70 shadow-md" : "bg-transparent"
           }`}
-        // optional: add aria
         role="banner"
       >
-        <div className="max-w-7xl mx-auto flex justify-between items-center px-5 h-20">
-          <a href="/" className="flex items-center gap-2 text-xl font-bold">
-            <img src={logo.src} alt="Logo" className="w-16 h-20 object-contain" />
+        <div className="max-w-7xl mx-auto flex gap-4 items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12 h-20">
+          {/* LOGO */}
+          <a href="/" className="flex items-center ">
+            <img src={logo.src} alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain" />
+            <span className="hidden sm:inline text-xl font-semibold text-primary">Contentमोहल्ला
+</span>
           </a>
 
-          {/* NAV LINKS */}
-          <nav className="hidden md:flex gap-8 items-center">
+          {/* NAV (desktop) */}
+          <nav className="hidden md:flex gap-6 items-center">
             {navItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.path}
-                className="nav-link-item text-[16px]"
-              >
+              <a key={item.name} href={item.path} className="nav-link-item text-[15px]">
                 {item.name}
               </a>
             ))}
           </nav>
 
-          {/* RIGHT */}
-          <div className="hidden md:flex items-center gap-4">
-            <SearchOverlay theme={theme} />
+          {/* RIGHT SIDE (desktop) */}
+          <div className="hidden md:flex items-center gap-3">
+            {/* Search (keeps its own open state) */}
+            <div className="mr-1">
+              <SearchOverlay theme={theme} />
+            </div>
 
+            {/* Auth / Bookmarks */}
             {user ? (
-              <button onClick={handleLogout} className="btn-style5">
+              <button onClick={handleLogout} className="btn-style5" aria-label="Logout">
                 <HiOutlineLogout className="font-bold text-xl" />
               </button>
             ) : (
-              <a href="/login" className="btn-style5">
+              <a href="/login" className="btn-style5" aria-label="Login">
                 <HiOutlineLogin className="font-bold text-xl" />
               </a>
             )}
 
-            <a href="/bookmarks" className="btn-style5 font-bold">
+            <a href="/bookmarks" className="btn-style5 font-bold" aria-label="Bookmarks">
               <LuBookmarkPlus className="font-bold text-xl" />
             </a>
 
-            {/* Theme Icon */}
+            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full hover-primary transition"
               aria-label="Toggle theme"
             >
-              {theme === "dark" ? (
-                <FaSun className="text-primary w-5 h-5" />
-              ) : (
-                <FaMoon className="text-primary w-5 h-5" />
-              )}
+              {theme === "dark" ? <FaSun className="text-primary w-5 h-5" /> : <FaMoon className="text-primary w-5 h-5" />}
             </button>
 
+            {/* Profile */}
             {user && (
               <a href="/profile" aria-label="Profile">
-                <FaUserCircle className={`w-6 h-6 text-primary`} />
+                <FaUserCircle className="w-6 h-6 text-primary" />
               </a>
             )}
           </div>
 
-          <button
-            className="md:hidden text-[26px] text-primary"
-            onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle menu"
-          >
-            {isOpen ? <FaTimes /> : <FaBars />}
-          </button>
+          {/* MOBILE: hamburger */}
+          <div className="md:hidden flex items-center gap-2">
+            <SearchOverlay theme={theme} />
+            <button
+              className="text-primary p-2 rounded-lg focus:outline-none"
+              onClick={() => setIsOpen(!isOpen)}
+              aria-label="Toggle menu"
+            >
+              {isOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+            </button>
+          </div>
         </div>
 
-        {/* MOBILE MENU */}
-        {isOpen && (
-          <div className="md:hidden flex flex-col items-center py-5 gap-3 glass-panel">
-            {navItems.map((i) => (
-              <a
-                key={i.name}
-                onClick={() => setIsOpen(false)}
-                href={i.path}
-                className="nav-link-item text-lg"
-              >
-                {i.name}
-              </a>
-            ))}
+        {/* MOBILE NAV PANEL */}
+        <div className={`md:hidden transition-max-h duration-300 ease-in-out overflow-hidden ${isOpen ? "max-h-screen" : "max-h-0"}`}>
+          <div className="px-4 pb-6 pt-4 border-t bg-white dark:bg-black">
+            {/* nav items */}
+            <div className="flex flex-col gap-2">
+              {navItems.map((i) => (
+                <a
+                  key={i.name}
+                  href={i.path}
+                  onClick={() => setIsOpen(false)}
+                  className="block py-3 px-3 rounded-lg nav-link-item"
+                >
+                  {i.name}
+                </a>
+              ))}
+            </div>
 
-            <a href="/bookmarks" className="btn-style5">
-              <LuBookmarkPlus className="font-bold text-xl" />
-            </a>
-
-            <div className="pt-3 flex gap-3">
+            {/* auth + theme + bookmarks (mobile) */}
+            <div className="flex items-center gap-3 mt-4">
               {user ? (
                 <button onClick={handleLogout} className="btn-style5">
                   <HiOutlineLogout className="font-bold text-xl" />
@@ -181,33 +180,66 @@ export default function Header({ theme, toggleTheme }) {
                 </a>
               )}
 
-              <button onClick={toggleTheme} className="btn-style5">
+              <a href="/bookmarks" className="btn-style5">
+                <LuBookmarkPlus className="font-bold text-xl" />
+              </a>
+
+              <button onClick={toggleTheme} className="btn-style5" aria-label="Toggle theme">
                 {theme === "dark" ? <FaSun /> : <FaMoon />}
               </button>
             </div>
+
+            {/* social + email (mobile panel) */}
+            <div className="mt-4 border-t pt-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <a href="https://www.facebook.com/Contentmohalla" aria-label="Facebook" className="p-2 rounded-full border border-[rgba(0,0,0,0.06)] hover:bg-primary/10 transition">
+                  <FaFacebookF />
+                </a>
+                <a href="https://www.instagram.com/content_mohalla" aria-label="Instagram" className="p-2 rounded-full border border-[rgba(0,0,0,0.06)] hover:bg-primary/10 transition">
+                  <FaInstagram />
+                </a>
+                <a href="https://x.com/contentmohalla" aria-label="X / Twitter" className="p-2 rounded-full border border-[rgba(0,0,0,0.06)] hover:bg-primary/10 transition">
+                  <FaTwitter />
+                </a>
+                <a href="https://www.youtube.com/@contentmohalla3" aria-label="YouTube" className="p-2 rounded-full border border-[rgba(0,0,0,0.06)] hover:bg-primary/10 transition">
+                  <FaYoutube />
+                </a>
+
+                {/* Email next to icons (mobile) */}
+                <a href={`mailto:${EMAIL}`} aria-label="Email" className="flex items-center gap-2 ml-2 text-sm text-gray-700 dark:text-gray-200 underline">
+                  <FaEnvelope className="w-4 h-4" /> <span className="hidden sm:inline">{EMAIL}</span>
+                </a>
+              </div>
+
+            </div>
           </div>
-        )}
+        </div>
       </header>
 
-      <div className="thin-orange-line sticky top-0 z-[60]"></div>
+      {/* THIN ORANGE LINE (responsive container) */}
+      <div className="thin-orange-line"></div>
 
-      {/* TOP BAR */}
-      <div className="w-full bg-transparent  py-1 flex items-center justify-between px-36 text-sm">
-        <div className="text-primary font-semibold"></div>
+      {/* TOP BAR (desktop only) */}
+      <div className="hidden lg:flex items-center justify-between max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-1 text-sm">
+        <div></div>
 
         <div className="flex items-center gap-3 text-primary text-lg">
-          <div className="text-primary font-semibold">Email us : contentmohalla@gmail.com</div>
-          <a href="https://www.facebook.com/Contentmohalla?rdid=cxcamsY8mPd8MzCM&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1GasTNtAaF%2F#" className="border-primary border p-1 rounded-full hover-primary transition">
+          <a href="https://www.facebook.com/Contentmohalla" className="border-primary border p-1 rounded-full hover-primary transition" aria-label="Facebook">
             <FaFacebookF />
           </a>
-          <a href="https://www.instagram.com/content_mohalla/?igsh=MW5iYmp2dm03bmZsNg%3D%3D#" className="border-primary border p-1 rounded-full hover-primary transition">
+          <a href="https://www.instagram.com/content_mohalla" className="border-primary border p-1 rounded-full hover-primary transition" aria-label="Instagram">
             <FaInstagram />
           </a>
-          <a href="https://x.com/contentmohalla?t=X3ekB2-Pbr9V-6T2LXuo4w&s=08" className="border-primary border p-1 rounded-full hover-primary transition">
+          <a href="https://x.com/contentmohalla" className="border-primary border p-1 rounded-full hover-primary transition" aria-label="X / Twitter">
             <FaTwitter />
           </a>
-          <a href="https://www.youtube.com/@contentmohalla3" className="border-primary border p-1 rounded-full hover-primary transition">
+          <a href="https://www.youtube.com/@contentmohalla3" className="border-primary border p-1 rounded-full hover-primary transition" aria-label="YouTube">
             <FaYoutube />
+          </a>
+
+          {/* Email next to social icons (desktop) */}
+          <a href={`mailto:${EMAIL}`} aria-label="Email" className="flex items-center gap-2 ml-3 text-sm text-primary ">
+           <FaEnvelope href="contentmohalla@gmail.com" className="w-4 h-4" /><span className="font-semibold">जुड़िये :</span> <span className="hidden xl:inline">{EMAIL}</span>
           </a>
         </div>
       </div>
