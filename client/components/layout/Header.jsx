@@ -32,6 +32,10 @@ const navItems = [
 export default function Header({ theme, toggleTheme }) {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Change this to adjust when header should switch styles (in px)
+  const SCROLL_THRESHOLD = 60;
 
   useEffect(() => {
     const checkUser = async () => {
@@ -49,6 +53,23 @@ export default function Header({ theme, toggleTheme }) {
     checkUser();
   }, []);
 
+  useEffect(() => {
+    // add scroll listener to toggle isScrolled
+    const onScroll = () => {
+      if (window.scrollY > SCROLL_THRESHOLD) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    // run once to set initial state (useful on page refresh with scroll)
+    if (typeof window !== "undefined") onScroll();
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const handleLogout = async () => {
     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
       method: "POST",
@@ -60,11 +81,15 @@ export default function Header({ theme, toggleTheme }) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 glass-panel transition-all duration-500">
+      <header
+        className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? "backdrop-blur-sm bg-white/80 dark:bg-black/70 shadow-md" : "bg-transparent"
+          }`}
+        // optional: add aria
+        role="banner"
+      >
         <div className="max-w-7xl mx-auto flex justify-between items-center px-5 h-20">
-
           <a href="/" className="flex items-center gap-2 text-xl font-bold">
-            <img src={logo.src} alt="Logo" className="w-16 h-20" />
+            <img src={logo.src} alt="Logo" className="w-16 h-20 object-contain" />
           </a>
 
           {/* NAV LINKS */}
@@ -82,7 +107,6 @@ export default function Header({ theme, toggleTheme }) {
 
           {/* RIGHT */}
           <div className="hidden md:flex items-center gap-4">
-
             <SearchOverlay theme={theme} />
 
             {user ? (
@@ -103,6 +127,7 @@ export default function Header({ theme, toggleTheme }) {
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full hover-primary transition"
+              aria-label="Toggle theme"
             >
               {theme === "dark" ? (
                 <FaSun className="text-primary w-5 h-5" />
@@ -112,10 +137,8 @@ export default function Header({ theme, toggleTheme }) {
             </button>
 
             {user && (
-              <a href="/profile">
-                <FaUserCircle
-                  className={`w-6 h-6 text-primary`}
-                />
+              <a href="/profile" aria-label="Profile">
+                <FaUserCircle className={`w-6 h-6 text-primary`} />
               </a>
             )}
           </div>
@@ -123,6 +146,7 @@ export default function Header({ theme, toggleTheme }) {
           <button
             className="md:hidden text-[26px] text-primary"
             onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
           >
             {isOpen ? <FaTimes /> : <FaBars />}
           </button>
@@ -131,7 +155,6 @@ export default function Header({ theme, toggleTheme }) {
         {/* MOBILE MENU */}
         {isOpen && (
           <div className="md:hidden flex flex-col items-center py-5 gap-3 glass-panel">
-
             {navItems.map((i) => (
               <a
                 key={i.name}
@@ -170,15 +193,10 @@ export default function Header({ theme, toggleTheme }) {
 
       {/* TOP BAR */}
       <div className="w-full bg-transparent  py-1 flex items-center justify-between px-36 text-sm">
-
-        <div className="text-primary font-semibold">
-       
-        </div>
+        <div className="text-primary font-semibold"></div>
 
         <div className="flex items-center gap-3 text-primary text-lg">
-            <div className="text-primary font-semibold">
-          Email us: test@gmail.com
-        </div>
+          <div className="text-primary font-semibold">Email us : Contentmohalla@gmail.com</div>
           <a href="#" className="border-primary border p-1 rounded-full hover-primary transition">
             <FaFacebookF />
           </a>

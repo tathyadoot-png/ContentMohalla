@@ -3,25 +3,17 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { IoPlaySharp } from "react-icons/io5";
-import {
-  FiHeart,
-  FiBookmark,
-} from "react-icons/fi";
-
+import { FiHeart, FiBookmark, FiTrendingUp } from "react-icons/fi";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const API_ENDPOINT = `${API_BASE}/api/poems/no-hindi`;
+const FALLBACK_AVATAR = "/fallback-avatar.png"; // अपना fallback path यहाँ रखो
 
-/**
- * PoemsExcludingHindiCards — improved badge detection (uses languagesResolved if backend provides it)
- */
 export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
   const [poems, setPoems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [langMap, setLangMap] = useState({}); // id -> name
+  const [langMap, setLangMap] = useState({});
 
-  // fetch poems from backend
   async function fetchPoems() {
     setLoading(true);
     try {
@@ -32,8 +24,6 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
         return;
       }
       const json = await res.json();
-
-      // normalize to an array (support multiple response shapes)
       let list = [];
       if (!json) list = [];
       else if (Array.isArray(json)) list = json;
@@ -43,13 +33,8 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
         const arr = Object.values(json).find((v) => Array.isArray(v));
         list = arr || [];
       }
-
       setPoems(list || []);
-
-      // build initial langMap from any server-provided languagesResolved
       buildLangMapFromResolved(list || []);
-
-      // then try to resolve remaining ids (if any)
       await resolveLanguageIds(list || []);
     } catch (err) {
       console.error("fetchPoems error:", err);
@@ -59,12 +44,10 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
     }
   }
 
-  // build a map from any languagesResolved the backend might have returned
   const buildLangMapFromResolved = (list) => {
     const map = {};
     (list || []).forEach((p) => {
       if (!p) return;
-      // If backend included languagesResolved array (recommended)
       if (Array.isArray(p.languagesResolved)) {
         p.languagesResolved.forEach((lr) => {
           if (lr && lr.mainLanguageId && lr.mainLanguageName) {
@@ -75,11 +58,9 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
           }
         });
       }
-      // Also handle if languages array already contains readable names
       if (Array.isArray(p.languages)) {
         p.languages.forEach((lg) => {
           if (!lg) return;
-          // case: { subLanguageName: "Urdu" }
           if (typeof lg.subLanguageName === "string" && lg.subLanguageName.trim() && !/^[0-9a-fA-F]{24}$/.test(lg.subLanguageName)) {
             map[lg.subLanguageName] = lg.subLanguageName;
           }
@@ -91,23 +72,20 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
     });
 
     if (Object.keys(map).length) {
-      setLangMap((prev) => ({ ...map, ...prev })); // prefer resolved map entries
+      setLangMap((prev) => ({ ...map, ...prev }));
     }
   };
 
-  // resolve any language ids (24-hex) seen in poems by calling language endpoints
   const resolveLanguageIds = async (list) => {
     const idSet = new Set();
     (list || []).forEach((p) => {
       if (!p || !Array.isArray(p.languages)) return;
       p.languages.forEach((l) => {
-        // languages item might be string or object
         const candidate = typeof l === "string" ? l : (l.subLanguageName || l.mainLanguage || "");
         if (typeof candidate === "string" && /^[0-9a-fA-F]{24}$/.test(candidate)) {
           idSet.add(candidate);
         }
       });
-      // also accept resolved shape names stored as ids in languagesResolved (rare)
       if (Array.isArray(p.languagesResolved)) {
         p.languagesResolved.forEach((lr) => {
           if (lr && lr.mainLanguageId && /^[0-9a-fA-F]{24}$/.test(String(lr.mainLanguageId))) {
@@ -123,7 +101,6 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
     const ids = Array.from(idSet);
     if (ids.length === 0) return;
 
-    // try batch endpoint first (if you implement it on backend)
     try {
       const batchUrl = `${API_BASE}/api/languages/batch?ids=${ids.join(",")}`;
       const r = await fetch(batchUrl, { cache: "no-store" });
@@ -132,7 +109,6 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
         if (Array.isArray(json) && json.length > 0) {
           const map = {};
           json.forEach((item) => {
-            // language schema: { _id, mainCategory, subLanguages: [{ name, _id }, ...] }
             map[String(item._id)] = item.mainCategory || item.name || item.title || String(item._id);
             if (Array.isArray(item.subLanguages)) {
               item.subLanguages.forEach((sl) => {
@@ -145,10 +121,9 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
         }
       }
     } catch (e) {
-      // ignore and fallback
+      // ignore
     }
 
-    // fallback: per-id requests
     const map = {};
     await Promise.all(
       ids.map(async (id) => {
@@ -156,9 +131,6 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
           const r = await fetch(`${API_BASE}/api/languages/${id}`, { cache: "no-store" });
           if (!r.ok) return;
           const j = await r.json();
-          // Expected shapes handled:
-          // { _id, mainCategory, subLanguages }
-          // or { _id, name }
           const name = j.mainCategory || j.name || j.title || (j.data && j.data.name) || null;
           if (name) map[id] = name;
           if (Array.isArray(j.subLanguages)) {
@@ -166,15 +138,10 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
               if (sl && sl._id) map[String(sl._id)] = sl.name || sl.title || name;
             });
           }
-        } catch (err) {
-          // ignore individual failures
-        }
+        } catch (err) {}
       })
     );
-
-    if (Object.keys(map).length) {
-      setLangMap((prev) => ({ ...prev, ...map }));
-    }
+    if (Object.keys(map).length) setLangMap((prev) => ({ ...prev, ...map }));
   };
 
   useEffect(() => {
@@ -182,73 +149,68 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // derive badge text — prefer backend-resolved, fallback to local map or strings
   const getBadgeText = (poem) => {
     try {
-      // 1) backend-resolved shape
       if (Array.isArray(poem.languagesResolved) && poem.languagesResolved.length > 0) {
         const first = poem.languagesResolved[0];
         return first.subLanguageName || first.mainLanguageName || "Unknown";
       }
-
-      // 2) languages array — can be object or string
       if (Array.isArray(poem.languages) && poem.languages.length > 0) {
         const first = poem.languages[0];
-        // if object
         if (first && typeof first === "object") {
           const sub = first.subLanguageName;
           const main = first.mainLanguage;
-          // plain string names:
           if (typeof sub === "string" && sub.trim() && !/^[0-9a-fA-F]{24}$/.test(sub)) return sub;
           if (typeof main === "string" && main.trim() && !/^[0-9a-fA-F]{24}$/.test(main)) return main;
-          // ids -> lookup in langMap
           if (typeof sub === "string" && /^[0-9a-fA-F]{24}$/.test(sub)) return langMap[sub] || "Unknown";
           if (typeof main === "string" && /^[0-9a-fA-F]{24}$/.test(main)) return langMap[main] || "Unknown";
         }
-        // if first is plain string
         if (typeof first === "string" && first.trim()) return first;
       }
-
-      // 3) older/other shapes (attributes)
       if (poem.attributes && Array.isArray(poem.attributes.languages) && poem.attributes.languages.length > 0) {
         const r = poem.attributes.languages[0].subLanguageName || poem.attributes.languages[0].mainLanguage;
         if (typeof r === "string" && r.trim()) return r;
       }
-    } catch (e) {
-      // fallback below
-    }
+    } catch (e) {}
     return "Unknown";
   };
 
   return (
-    <section aria-label="Poems excluding Hindi" className="w-full py-8" style={{ backgroundColor: "rgba(255,248,240,0.95)" }}>
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header (matching the style you used earlier) */}
-        <div className="w-[96%] lg:w-[88%] mx-auto md:pt-2 pt-4 flex items-end justify-between border-b border-gray-200 dark:border-gray-700 pb-3 mb-6 transition-all">
+    <section aria-label="Poems excluding Hindi" className="w-full py-8" style={{ backgroundColor: "var(--bg)" }}>
+      <div className="max-w-7xl mx-auto ">
+        {/* Header (SectionHeader-like) */}
+        <div className="w-[96%] lg:w-[88%] mx-auto md:pt-6 pt-8 flex items-end justify-between pb-3 mb-6 transition-all">
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
-              <div className="w-14 h-14 rounded-full border border-amber-500/80 dark:border-purple-600 flex items-center justify-center shadow-md transition-all duration-500" aria-hidden>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-amber-800">
-                  <path d="M3 12h18M3 6h12M3 18h18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <div
+                className="w-14 h-14 rounded-full bg-white dark:bg-[#141414] border-2 flex items-center justify-center shadow-md transition-all duration-500"
+                style={{
+                  borderColor: "var(--primary)",
+                  boxShadow: "0 10px 30px rgba(255,107,0,0.12)",
+                }}
+                aria-hidden
+              >
+                <FiTrendingUp className="text-primary stroke-2" size={24} style={{ color: "var(--primary)" }} />
               </div>
             </div>
 
             <div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-tight tracking-tight" style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
-                Our Best Poems
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight" style={{ color: "var(--primary)", fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
+                विदेशी भाषाओं की चुनिंदा रचनाएँ
               </h2>
-              <p className="mt-1 text-sm md:text-base text-gray-600 dark:text-gray-400 font-medium">Handpicked — विदेशी भाषाओं की चुनिंदा रचनाएँ</p>
+              <p className="mt-1 text-sm md:text-base" style={{ color: "var(--text)", opacity: 0.85 }}>
+                Handpicked — curated selections from non-Hindi languages
+              </p>
             </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-16">Loading…</div>
+          <div className="flex items-center justify-center py-16" style={{ color: "var(--text)" }}>Loading…</div>
         ) : poems.length === 0 ? (
-          <div className="flex items-center justify-center py-16 text-gray-600">No poems found.</div>
+          <div className="flex items-center justify-center py-16 text-gray-600" style={{ color: "var(--text)" }}>No poems found.</div>
         ) : (
-          <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-wrap gap-6 justify-start">
             {poems.map((poem, idx) => {
               const id = poem._id || poem.id || idx;
               const slug = poem.slug || (poem.attributes && poem.attributes.slug) || poem.id || String(id);
@@ -257,121 +219,125 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
               const imageUrl = poem.image?.url || poem.attributes?.image?.url || poem.image || null;
               const writer = (poem.writerId && (poem.writerId.penName || poem.writerId.fullName)) || poem.writerName || "अज्ञात";
               const createdAt = poem.createdAt || poem.attributes?.createdAt || poem.date || poem.createdAt;
-
               const badgeText = getBadgeText(poem);
 
+              // writer avatar source (handle different shapes)
+              const writerAvatar =
+                poem.writerAvatar?.url ||
+                (typeof poem.writerAvatar === "string" ? poem.writerAvatar : null) ||
+                poem.writerId?.avatar?.url ||
+                (typeof poem.writerId?.avatar === "string" ? poem.writerId.avatar : null) ||
+                FALLBACK_AVATAR;
+
               return (
-           <Link
-  key={id}
-  href={`/kavya/${encodeURIComponent(rasSlug || "general")}/${encodeURIComponent(slug)}`}
- className="group block bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 
-rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1
-w-full sm:w-[320px] min-h-[320px]"
+                <Link
+                  key={id}
+                  href={`/kavya/${encodeURIComponent(rasSlug || "general")}/${encodeURIComponent(slug)}`}
+                  className="group block rounded-2xl overflow-hidden shadow shadow-orange-200 hover:shadow-md hover:shadow-orange-300 transition-all duration-300 hover:-translate-y-1"
+                  style={{
+                    background: "var(--glass)",
+                    border: "1px solid var(--glass-border)",
+                    // boxShadow: "0 6px 20px rgba(255,107,0,0.06)",
+                    minWidth: 320,
+                    maxWidth: 320,
+                    width: "320px",
+                  }}
+                >
+                  {/* IMAGE + BADGE */}
+                  <div className="relative w-full aspect-[3/2] overflow-hidden rounded-t-2xl bg-gray-100 dark:bg-[#111]">
+                    <span
+                      className="absolute top-3 left-3 z-20 px-3 py-1 rounded-full text-xs font-semibold shadow"
+                      style={{
+                        background: "rgba(255,239,230,0.95)",
+                        color: "var(--primary)",
+                        boxShadow: "0 6px 18px rgba(255,107,0,0.06)",
+                      }}
+                    >
+                      {badgeText}
+                    </span>
 
->
-  {/* IMAGE + BADGE */}
-  <div className="relative w-full aspect-[3/2] overflow-hidden rounded-t-2xl bg-gray-100 dark:bg-[#1a1a1a]">
-    
-    {/* Badge — Language */}
-    <span className="absolute top-3 left-3 z-20 px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 text-xs font-semibold shadow">
-      {badgeText}
-    </span>
+                    {imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt={title}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center w-full h-full p-4 text-center" style={{ color: "var(--text)" }}>
+                        {title.slice(0, 60)}
+                      </div>
+                    )}
 
-    {/* Image */}
-    {imageUrl ? (
-      <Image
-        src={imageUrl}
-        alt={title}
-        fill
-        className="object-cover transition-transform duration-500 group-hover:scale-105"
-      />
-    ) : (
-      <div className="flex items-center justify-center w-full h-full bg-gray-200 dark:bg-[#333] text-gray-700 dark:text-gray-300 p-4 text-center">
-        {title.slice(0, 40)} 
-        
-      </div>
-    )}
+                    {createdAt && (
+                      <span
+                        className="absolute top-3 right-3 z-20 px-3 py-1 rounded-full text-xs font-medium"
+                        style={{
+                          background: "rgba(0,0,0,0.45)",
+                          color: "var(--bg)",
+                          backdropFilter: "blur(4px)",
+                        }}
+                      >
+                        {new Date(createdAt).toLocaleDateString("hi-IN", { month: "short", day: "numeric" })}
+                      </span>
+                    )}
+                  </div>
 
-    {/* DATE on Image (top-right) */}
-{createdAt && (
-  <span className="absolute top-3 right-3 z-20 px-3 py-1 rounded-full 
-    bg-black/50 text-white text-xs font-medium backdrop-blur-sm">
-    {new Date(createdAt).toLocaleDateString("hi-IN", {
-      month: "short",
-      day: "numeric",
-    })}
-  </span>
-)}
+                  {/* CONTENT */}
+                  <div className="p-3 flex flex-col gap-3 min-h-[160px]">
+                    <h3 className="text-lg font-bold line-clamp-2 transition-colors" style={{ color: "var(--text)" }}>
+                      {title}
+                    </h3>
 
-  </div>
+                    <p className="text-sm line-clamp-3" style={{ color: "var(--text)", opacity: 0.85 }}>
+                      {String(content).replace(/<[^>]+>/g, "").slice(0, 120)}
+                      {String(content).length > 120 ? "..." : ""}
+                    </p>
 
-  {/* CONTENT */}
-  <div className="p-4 flex flex-col gap-3">
+                    <div className="pt-3 mt-auto border-t" style={{ borderColor: "var(--glass-border)" }}>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {/* fixed-size rounded avatar with border & shadow */}
+                          <div style={{ width: 44, height: 44 }} className="rounded-full overflow-hidden flex items-center justify-center" aria-hidden>
+                            <Image
+                              src={writerAvatar || FALLBACK_AVATAR}
+                              width={34}
+                              height={34}
+                              alt={writer}
+                              className="rounded-full object-cover"
+                              unoptimized
+                              onError={(e) => { e.currentTarget.src = FALLBACK_AVATAR; }}
+                            />
+                          </div>
 
-    {/* TITLE */}
-    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-teal-300 transition-colors">
-      {title}
-    </h3>
+                          <div>
+                            <div className="text-sm font-semibold" style={{ color: "var(--text)" }}>{writer}</div>
+                            <div className="text-[10px]" style={{ color: "var(--text)", opacity: 0.7 }}>
+                              {createdAt ? new Date(createdAt).toLocaleDateString() : ""}
+                            </div>
+                          </div>
+                        </div>
 
-    {/* DESCRIPTION */}
-    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-      {String(content).replace(/<[^>]+>/g, "").slice(0, 120)}
-      {String(content).length > 120 ? "..." : ""}
-    </p>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1" style={{ color: "var(--primary)" }}>
+                            <FiHeart size={14} />
+                            <span className="font-semibold" style={{ color: "var(--text)" }}>
+                              {poem.likeCount ?? poem.likes?.length ?? 0}
+                            </span>
+                          </div>
 
-    {/* FOOTER — WRITER + DATE */}
-{/* FOOTER — WRITER + LIKE & BOOKMARK */}
-<div className="pt-3 mt-auto border-t border-gray-200 dark:border-gray-800 
-flex items-center justify-between">
-
-  {/* Writer */}
-  <Link
-    href={`/writer/${poem.writerId?._id || poem.writerId || ""}`}
-    onClick={(e) => e.stopPropagation()}
-    className="flex items-center gap-2 group/writer"
-  >
-    {poem.writerAvatar || poem.writerId?.avatar ? (
-      <Image
-        src={poem.writerAvatar || poem.writerId.avatar}
-        width={30}
-        height={30}
-        className="rounded-full object-cover"
-        alt={writer}
-      />
-    ) : (
-      <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700">
-        ✍️
-      </div>
-    )}
-
-    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover/writer:underline">
-      {writer}
-    </span>
-  </Link>
-
-  {/* LIKE + BOOKMARK */}
-  <div className="flex items-center gap-3 text-xs">
-
-    <div className="flex items-center gap-1 text-red-500">
-      <FiHeart size={14} />
-      <span className="font-bold text-gray-600 dark:text-gray-400">
-        {poem.likeCount ?? poem.likes?.length ?? 0}
-      </span>
-    </div>
-
-    <div className="flex items-center gap-1 text-amber-600 dark:text-teal-300">
-      <FiBookmark size={14} />
-      <span className="font-bold text-gray-600 dark:text-gray-400">
-        {poem.bookmarkCount ?? poem.bookmarks?.length ?? 0}
-      </span>
-    </div>
-
-  </div>
-</div>
-
-  </div>
-</Link>
-
+                          <div className="flex items-center gap-1" style={{ color: "var(--primary)" }}>
+                            <FiBookmark size={14} />
+                            <span className="font-semibold" style={{ color: "var(--text)" }}>
+                              {poem.bookmarkCount ?? poem.bookmarks?.length ?? 0}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
               );
             })}
           </div>

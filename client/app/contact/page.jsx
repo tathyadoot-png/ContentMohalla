@@ -7,8 +7,6 @@ export default function UserPoemForm() {
   const [loading, setLoading] = useState(false);
   const [languages, setLanguages] = useState([]);
 
-
-
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -21,7 +19,8 @@ export default function UserPoemForm() {
 
   const [image, setImage] = useState(null);
   const [audio, setAudio] = useState(null);
-  // 🟩 Fetch Languages (like Admin)
+
+  // 🟩 Fetch Languages
   useEffect(() => {
     setMounted(true);
     const fetchLanguages = async () => {
@@ -79,7 +78,7 @@ export default function UserPoemForm() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleFileChange = (e) => setImage(e.target.files[0]);
-const handleAudioChange = (e) => setAudio(e.target.files[0]);
+  const handleAudioChange = (e) => setAudio(e.target.files[0]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -111,7 +110,7 @@ const handleAudioChange = (e) => setAudio(e.target.files[0]);
       form.append("isAdminPost", false);
 
       if (image) form.append("image", image);
-if (audio) form.append("audio", audio);
+      if (audio) form.append("audio", audio);
 
       const res = await fetch(`${apiUrl}/api/poems/create`, {
         method: "POST",
@@ -127,7 +126,7 @@ if (audio) form.append("audio", audio);
           title: "🎉 आपकी रचना सबमिट हो गई!",
           text: "समीक्षा के बाद यह प्रकाशित की जाएगी।",
           confirmButtonText: "ठीक है",
-          confirmButtonColor: "#B83D43",
+          confirmButtonColor: "#ff6b00",
           background: "#fffbea",
         });
 
@@ -141,6 +140,7 @@ if (audio) form.append("audio", audio);
           videoLink: "",
         });
         setImage(null);
+        setAudio(null);
       } else {
         Swal.fire("Error", data.message || "Failed to submit poem", "error");
       }
@@ -157,13 +157,18 @@ if (audio) form.append("audio", audio);
     : null;
   const subLangs = selectedMain ? selectedMain.subLanguages : [];
 
-  // ---------- UI with dark-mode styles ----------
+  // ---------- UI with theme: normal (white + orange) ; dark (black + orange) ----------
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-8 rounded-2xl border transition-colors
-                    bg-gradient-to-br from-[#fffaf0] to-[#fffbea] border-[#ffd166]
-                    dark:from-[#071427] dark:to-[#062233] dark:border-[#06323d] shadow-xl">
-      <h2 className="text-3xl font-extrabold text-center mb-6 tracking-wide text-[#B83D43] dark:text-[#7fd3c6]">
-        ✍️ अपनी रचना भेजें
+    <div
+      className="
+        max-w-2xl mx-auto mt-10 p-8 rounded-2xl border transition-colors
+        bg-white  border-[rgba(255,107,0,0.06)] shadow shadow-orange-300  hover:shadow-md hover:shadow-orange-400
+        dark:bg-[#000000] dark:border-[rgba(255,107,0,0.12)]
+      "
+      style={{ outline: "none" }}
+    >
+      <h2 className="text-3xl font-extrabold text-center mb-6 tracking-wide text-orange-500 dark:text-orange-500">
+         अपनी रचना भेजें
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -176,8 +181,14 @@ if (audio) form.append("audio", audio);
             placeholder="अपनी रचना का शीर्षक लिखें"
             value={formData.title}
             onChange={handleChange}
-            className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#B83D43] outline-none
-                       bg-white dark:bg-[#042033] text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700"
+            className="
+              w-full p-3 rounded-lg shadow-sm
+              border border-[1px] border-[rgba(255,107,0,0.25)]
+              focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
+              bg-white text-gray-900
+              dark:bg-[#071014] dark:text-gray-100
+              dark:border-[rgba(255,107,0,0.28)]
+            "
             required
           />
         </div>
@@ -190,8 +201,14 @@ if (audio) form.append("audio", audio);
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#B83D43]
-                         bg-white dark:bg-[#042033] text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700"
+              className="
+                w-full p-3 rounded-lg shadow-sm
+                border border-[1px] border-[rgba(255,107,0,0.20)]
+                focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
+                bg-white text-gray-900
+                dark:bg-[#071014] dark:text-gray-100
+                dark:border-[rgba(255,107,0,0.28)]
+              "
               required
             >
               <option value="">श्रेणी चुनें</option>
@@ -206,8 +223,14 @@ if (audio) form.append("audio", audio);
               name="subcategory"
               value={formData.subcategory}
               onChange={handleChange}
-              className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#B83D43]
-                         bg-white dark:bg-[#042033] text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700"
+              className="
+                w-full p-3 rounded-lg shadow-sm
+                border border-[1px] border-[rgba(255,107,0,0.20)]
+                focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
+                bg-white text-gray-900
+                dark:bg-[#071014] dark:text-gray-100
+                dark:border-[rgba(255,107,0,0.28)]
+              "
               required
             >
               <option value="">उपश्रेणी चुनें</option>
@@ -237,8 +260,14 @@ if (audio) form.append("audio", audio);
                   subLanguage: selectedLang?.subLanguages[0]?.name || "",
                 }));
               }}
-              className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#B83D43]
-                         bg-white dark:bg-[#042033] text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700"
+              className="
+                w-full p-3 rounded-lg shadow-sm
+                border border-[1px] border-[rgba(255,107,0,0.20)]
+                focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
+                bg-white text-gray-900
+                dark:bg-[#071014] dark:text-gray-100
+                dark:border-[rgba(255,107,0,0.28)]
+              "
               required
             >
               {Array.isArray(languages) && languages.length > 0 ? (
@@ -259,8 +288,14 @@ if (audio) form.append("audio", audio);
               name="subLanguage"
               value={formData.subLanguage}
               onChange={handleChange}
-              className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#B83D43]
-                         bg-white dark:bg-[#042033] text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700"
+              className="
+                w-full p-3 rounded-lg shadow-sm
+                border border-[1px] border-[rgba(255,107,0,0.20)]
+                focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
+                bg-white text-gray-900
+                dark:bg-[#071014] dark:text-gray-100
+                dark:border-[rgba(255,107,0,0.28)]
+              "
               required
             >
               {subLangs.length > 0 ? (
@@ -285,8 +320,14 @@ if (audio) form.append("audio", audio);
             rows="6"
             value={formData.content}
             onChange={handleChange}
-            className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#B83D43]
-                       bg-white dark:bg-[#042033] text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700"
+            className="
+              w-full p-3 rounded-lg shadow-sm
+              border border-[1px] border-[rgba(255,107,0,0.20)]
+              focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
+              bg-white text-gray-900
+              dark:bg-[#071014] dark:text-gray-100
+              dark:border-[rgba(255,107,0,0.28)]
+            "
             required
           ></textarea>
         </div>
@@ -300,46 +341,50 @@ if (audio) form.append("audio", audio);
             placeholder="यदि कोई वीडियो लिंक हो तो यहाँ डालें"
             value={formData.videoLink}
             onChange={handleChange}
-            className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#B83D43]
-                       bg-white dark:bg-[#042033] text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700"
+            className="
+              w-full p-3 rounded-lg shadow-sm
+              border border-[1px] border-[rgba(255,107,0,0.20)]
+              focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
+              bg-white text-gray-900
+              dark:bg-[#071014] dark:text-gray-100
+              dark:border-[rgba(255,107,0,0.28)]
+            "
           />
         </div>
 
-        {/* Image Upload */} 
+        {/* Image + Audio Upload */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <label className="block font-semibold mb-1 text-gray-700 dark:text-gray-200">चित्र अपलोड करें</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="block mt-1 text-sm text-gray-700 dark:text-gray-300"
+            />
+          </div>
 
-        <div className="flex">
-        <div>
-          <label className="block font-semibold mb-1 text-gray-700 dark:text-gray-200">चित्र अपलोड करें</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="block mt-1 text-sm text-gray-700 dark:text-gray-300"
-          />
+          <div className="flex-1">
+            <label className="block font-semibold mb-1 text-gray-700 dark:text-gray-200">ऑडियो अपलोड करें (वैकल्पिक)</label>
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={handleAudioChange}
+              className="block mt-1 text-sm text-gray-700 dark:text-gray-300"
+            />
+          </div>
         </div>
-{/* Audio Upload */}
-<div>
-  <label className="block font-semibold mb-1 text-gray-700 dark:text-gray-200">
-    ऑडियो अपलोड करें (वैकल्पिक)
-  </label>
-  <input
-    type="file"
-    accept="audio/*"
-    onChange={handleAudioChange}
-    className="block mt-1 text-sm text-gray-700 dark:text-gray-300"
-  />
-</div>
-
-        </div>
-
 
         {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-lg font-semibold text-lg transition shadow-md
-                     bg-[#B83D43] hover:bg-[#a12e34] text-white
-                     dark:bg-gradient-to-r dark:from-[#0f7f74] dark:to-[#6dd9c7] dark:hover:from-[#0e6e64]"
+          className="
+            w-full py-3 rounded-lg font-semibold text-lg transition shadow-md
+           bg-orange-400 hover:bg-orange-500 text-white
+            dark:from-[#ff6b00] dark:to-[#ff7a00]
+            disabled:opacity-60 disabled:cursor-not-allowed
+          "
         >
           {loading ? "भेजा जा रहा है..." : "रचना सबमिट करें"}
         </button>
