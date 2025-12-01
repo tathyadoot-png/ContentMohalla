@@ -200,10 +200,10 @@ export const loginUser = async (req, res) => {
     );
 
     // decide cookie name
-    // const cookieName = user.role === "admin" ? "adminToken" : "userToken";
+    const cookieName = user.role === "admin" ? "adminToken" : "userToken";
 
     // set cookie using shared options
-    res.cookie("userToken", token, {
+    res.cookie(cookieName, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
@@ -243,15 +243,20 @@ export const loginUser = async (req, res) => {
 
 export const logoutUser = (req, res) => {
   const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    path: "/",
-  };
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: "/",
+};
 
-  res.clearCookie("userToken", cookieOptions);
-  res.clearCookie("adminToken", cookieOptions);
-  res.json({ success: true, message: "Logged out successfully" });
+// setting
+res.cookie(cookieName, token, cookieOptions);
+
+// clearing (use same options)
+res.clearCookie("userToken", cookieOptions);
+res.clearCookie("adminToken", cookieOptions);
+
 };
 
 
