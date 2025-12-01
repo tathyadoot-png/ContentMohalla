@@ -69,7 +69,7 @@ export default function PoetrySiteLogin() {
       >
         <div className="p-10 text-center">
           <h2 className="text-2xl font-extrabold text-gray-700 dark:text-primary">
-            साहित्य परिवार में पुनः स्वागत है
+            <span className="text-orange-500">"मोहल्ले"</span> में पुनः स्वागत है
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
             कृपया अपने खाते में लॉगिन करें और अपनी रचनाएँ साझा करें।

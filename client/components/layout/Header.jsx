@@ -85,9 +85,8 @@ export default function Header({ theme, toggleTheme }) {
         <div className="max-w-7xl mx-auto flex gap-4 items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12 h-20">
           {/* LOGO */}
           <a href="/" className="flex items-center ">
-            <img src={logo.src} alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain" />
-            <span className="hidden sm:inline text-xl font-semibold text-primary">Contentमोहल्ला
-</span>
+            <img src={logo.src} alt="Logo" className="w-12 h-12 md:w-40 md:h-40  object-contain" />
+          
           </a>
 
           {/* NAV (desktop) */}

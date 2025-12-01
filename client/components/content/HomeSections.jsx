@@ -24,12 +24,12 @@ const SectionHeader = ({ title, subtitle = "", icon: Icon }) => {
         </div>
 
         <div>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-primary tracking-tight">
+          <h2 className="font-heading text-xl sm:text-2xl md:text-3xl font-extrabold text-primary tracking-tight">
             {title}
           </h2>
 
           {subtitle !== "" && (
-            <p className="mt-1 text-sm md:text-base text-gray-600 dark:text-gray-400">
+            <p className=" font-heading mt-1 text-sm md:text-base text-gray-600 dark:text-gray-400">
               {subtitle}
             </p>
           )}
@@ -126,6 +126,15 @@ const HomeSections = () => {
   return (
     <div className="min-h-screen space-y-20 pb-14 pt-16 bg-white dark:bg-[#0b0b0b] transition-all duration-500">
       <section>
+         <section>
+        <SectionHeader
+          title="सबसे नवीन"
+          subtitle="हाल ही में प्रकाशित रचनाएँ"
+          icon={FiClock}
+        />
+        <HorizontalSection title="Latest" items={latest} showArrows />
+          <GadhyKavyaAccordion className="mt-6" />
+      </section>
         <SectionHeader
           title="लोकप्रिय"
           subtitle="सबसे ज़्यादा पसंद की गई रचनाएँ"
@@ -134,25 +143,18 @@ const HomeSections = () => {
         <HorizontalSection title="Most Liked" items={mostLiked} showArrows />
       </section>
 
-      <GadhyKavyaAccordion />
+    
 
       <section>
         <SectionHeader
-          title="सहेजी हुई"
+          title="सहेजी हुई रचनाएँ"
           subtitle="पाठकों द्वारा सहेजी गई रचनाएँ"
           icon={FiBookmark}
         />
         <HorizontalSection title="Most Bookmarked" items={mostBookmarked} showArrows />
       </section>
 
-      <section>
-        <SectionHeader
-          title="सबसे नवीन"
-          subtitle="हाल ही में प्रकाशित रचनाएँ"
-          icon={FiClock}
-        />
-        <HorizontalSection title="Latest" items={latest} showArrows />
-      </section>
+     
     </div>
   );
 };

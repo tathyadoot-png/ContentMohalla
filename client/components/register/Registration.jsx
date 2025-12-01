@@ -134,7 +134,7 @@ export default function PoetrySiteRegistration() {
                      ">
         <div className="p-10 text-center">
           <h2 className="text-3xl font-extrabold text-gray-600 dark:text-gray-300">
-            साहित्य परिवार में आपका <span className="text-orange-500">स्वागत</span> है
+            <span className="text-orange-500">"मोहल्ले"</span> में आपका <span className="text-orange-500">स्वागत</span> है
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
             अपनी रचनाएँ साझा करने के लिए कृपया पंजीकरण करें।

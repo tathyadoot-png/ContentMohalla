@@ -7,16 +7,13 @@ module.exports = {
   ],
   theme: {
     extend: {
-      colors: {
-        primary: "#ff6b00",
-      },
-      fontFamily: {
-        body: ["Inter", "sans-serif"],
-        devanagari: ["Tiro Devanagari Hindi", "serif"],
-      },
-      boxShadow: {
-        'soft-orange': '0 8px 30px rgba(255,107,0,0.14)',
-      }
+      colors: { primary: "#ff6b00" },
+     fontFamily: {
+  body: ["Hind", "sans-serif"],
+  heading: ["Gotu", "sans-serif"],
+}
+,
+      boxShadow: { 'soft-orange': '0 8px 30px rgba(255,107,0,0.14)' }
     },
   },
   plugins: [],

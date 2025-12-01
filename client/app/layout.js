@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import React, { useEffect, useState } from "react";
 import { FaArrowUp } from "react-icons/fa";
 import { SearchProvider } from "@/context/SearchContext";
@@ -58,6 +58,16 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="hi" className="font-body">
+        <head>
+        {/* Google fonts: लिंक यहीं add करो */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Gotu&family=Hind:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+
       <body className={`transition-all duration-400 ease-in-out min-h-screen`}>
         <Header theme={theme} toggleTheme={toggleTheme} />
         <SearchProvider>{children}</SearchProvider>

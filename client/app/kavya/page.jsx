@@ -5,97 +5,89 @@ import { useRouter } from "next/navigation";
 
 /* -------------------- SVG ICONS -------------------- */
 const ShringarIcon = (props) => (
-  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 28 C16 18, 32 18, 32 30 C32 18, 48 18, 48 28" />
-    <path d="M16 28 Q24 38 32 40 Q40 38 48 28" />
-    <path d="M32 40 L32 50" />
-    <circle cx="32" cy="50" r="4" fill="currentColor" stroke="none" />
+  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor"
+    strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M32 54 C10 36,6 22,18 14 C24 10,30 14,32 18 C34 14,40 10,46 14 C58 22,54 36,32 54 Z" />
+    <circle cx="32" cy="20" r="4" />
   </svg>
 );
 
 const HasyaIcon = (props) => (
-  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="32" cy="32" r="28" />
-    <path d="M22 26 L26 26" />
-    <path d="M38 26 L42 26" />
-    <path d="M18 40 Q32 54 46 40" />
-    <path d="M18 40 L46 40" strokeWidth="2" strokeDasharray="2 3" />
+  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor"
+    strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="32" cy="32" r="26" />
+    <path d="M22 26 Q26 22 32 26 Q38 22 42 26" />
+    <path d="M22 40 Q32 48 42 40" />
   </svg>
 );
+
 
 const KarunaIcon = (props) => (
-  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M32 6 L32 40" />
-    <path d="M20 40 Q32 34 44 40" />
-    <path d="M25 40 Q32 50 39 40" />
-    <circle cx="32" cy="20" r="2" fill="currentColor" stroke="none" />
-    <path d="M32 40 L32 58" stroke="blue" strokeWidth="2" />
-    <path d="M32 58 L28 54 M32 58 L36 54" stroke="blue" strokeWidth="2" />
+  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor"
+    strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="32" cy="28" r="14" />
+    <path d="M26 34 Q32 38 38 34" />
+    <path d="M22 24 L20 28" />
+    <path d="M42 24 L44 28" />
+    <path d="M32 42 C30 48 28 52 32 56 C36 52 34 48 32 42 Z" />
   </svg>
 );
+
 
 const RaudraIcon = (props) => (
-  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 15 L49 15 M15 49 L49 49 M15 15 L15 49 M49 15 L49 49" />
-    <path d="M20 25 L44 25" />
-    <path d="M20 30 L44 30" />
-    <path d="M20 35 L44 35" />
-    <path d="M20 40 L44 40" />
-    <path d="M32 50 L32 55" />
-    <path d="M32 55 L35 52 M32 55 L29 52" />
+  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor"
+    strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M32 8 C24 18,30 24,24 34 C14 46,22 56,32 56 C42 56,50 46,40 34 C34 24,40 18,32 8 Z" />
   </svg>
 );
 
+
 const VeerIcon = (props) => (
-  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M32 8 L40 20 L32 56 L24 20 Z" />
-    <path d="M32 56 L32 60" strokeWidth="4" />
-    <path d="M48 20 Q55 25 48 30 L40 20 Z" />
-    <path d="M16 20 Q9 25 16 30 L24 20 Z" />
+  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor"
+    strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="40" cy="28" r="10" />
+    <path d="M20 50 L36 34" />
+    <path d="M24 54 L20 50 L24 46" />
   </svg>
 );
 
 const BhayanakIcon = (props) => (
-  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 40 L20 44 L44 44 L44 40" />
-    <path d="M20 40 Q32 30 44 40" />
-    <circle cx="25" cy="28" r="3" />
-    <circle cx="39" cy="28" r="3" />
-    <path d="M22 22 L20 20 M42 22 L44 20" />
-    <path d="M20 54 Q32 48 44 54" strokeWidth="2" strokeDasharray="4 4" />
+  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor"
+    strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M32 10 C18 10 10 20 10 32 C10 44 18 54 32 54 C46 54 54 44 54 32 C54 20 46 10 32 10 Z" />
+    <circle cx="24" cy="30" r="4" />
+    <circle cx="40" cy="30" r="4" />
+    <path d="M24 42 L40 42" />
   </svg>
 );
+;
 
 const BibhatsIcon = (props) => (
-  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 45 Q32 35 44 45" />
-    <path d="M20 35 L20 45 M44 35 L44 45" />
-    <path d="M18 25 L46 25" />
-    <path d="M18 30 L46 30" />
-    <path d="M18 35 L46 35" />
-    <path d="M32 55 L32 60" />
-    <path d="M32 60 L28 56 M32 60 L36 56" />
+  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor"
+    strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="32" cy="32" r="26" />
+    <path d="M22 26 L26 26" />
+    <path d="M38 26 L42 26" />
+    <path d="M22 40 Q32 30 42 40" />
+    <path d="M32 40 L32 54" />
   </svg>
 );
 
 const AdbhutIcon = (props) => (
-  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M32 6 L32 58" />
-    <path d="M6 32 L58 32" />
-    <path d="M16 16 L48 48 M16 48 L48 16" />
-    <circle cx="32" cy="32" r="10" />
-    <path d="M32 20 L32 44" strokeWidth="2" />
+  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor"
+    strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M32 6 L36 20 L50 22 L38 30 L42 44 L32 36 L22 44 L26 30 L14 22 L28 20 Z" />
   </svg>
 );
 
 const ShantIcon = (props) => (
-  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 44 L48 44" />
-    <path d="M32 44 L32 30" />
-    <circle cx="32" cy="20" r="10" />
-    <path d="M16 44 C12 50, 20 56, 32 56 C44 56, 52 50, 48 44" />
+  <svg {...props} viewBox="0 0 64 64" fill="none" stroke="currentColor"
+    strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M32 14 C26 20,20 26,18 34 C26 30,28 34,32 40 C36 34,38 30,46 34 C44 26,38 20,32 14 Z" />
+    <circle cx="32" cy="40" r="8" />
   </svg>
 );
+
 
 /* -------------------- RASAS DATA -------------------- */
 const rasData = [

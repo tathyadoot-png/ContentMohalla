@@ -196,10 +196,11 @@ export default function PoemsExcludingHindiCards({ rasSlug = "karun" }) {
 
             <div>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight" style={{ color: "var(--primary)", fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
-                विदेशी भाषाओं की चुनिंदा रचनाएँ
+                भारतीय बोलियों की चुनिंदा रचनाएं
               </h2>
               <p className="mt-1 text-sm md:text-base" style={{ color: "var(--text)", opacity: 0.85 }}>
-                Handpicked — curated selections from non-Hindi languages
+              सबकी भाषा, सबका मंच
+
               </p>
             </div>
           </div>
