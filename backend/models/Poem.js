@@ -1,6 +1,28 @@
 import mongoose from "mongoose";
 import slugify from "slugify";
 
+
+
+const makeBaseSlug = (title) => {
+  let generated = slugify(title || "", {
+    lower: true,
+    strict: false,
+    locale: "hi",
+    trim: true,
+  });
+
+  if (!generated || generated.trim() === "") {
+    generated = String(title || "").trim().replace(/\s+/g, "-").toLowerCase();
+  }
+
+  return generated.slice(0, 80);
+};
+
+const randomSuffix = () => 
+  Math.random().toString(36).substring(2, 8); // e.g. k9x2p1
+
+
+
 const poemSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
@@ -121,6 +143,32 @@ poemSchema.index(
     language_override: "none"
   }
 );
+
+
+poemSchema.pre("save", async function (next) {
+  try {
+    if (this.isModified("title") || !this.slug) {
+      const base = makeBaseSlug(this.title);
+
+      let candidate = `${base}-${randomSuffix()}`;
+      let exists = await this.constructor.exists({ slug: candidate });
+
+      if (exists) {
+        candidate = `${base}-${randomSuffix()}`;
+      }
+
+      this.slug = candidate;
+    }
+
+    this.bookmarkCount = this.bookmarks?.length || 0;
+    this.commentCount = this.comments?.length || 0;
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 
 const Poem = mongoose.model("Poem", poemSchema);
