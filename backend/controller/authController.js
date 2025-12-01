@@ -200,10 +200,10 @@ export const loginUser = async (req, res) => {
     );
 
     // decide cookie name
-    const cookieName = user.role === "admin" ? "adminToken" : "userToken";
+    // const cookieName = user.role === "admin" ? "adminToken" : "userToken";
 
     // set cookie using shared options
-    res.cookie(cookieName, token, {
+    res.cookie("userToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
@@ -217,7 +217,7 @@ export const loginUser = async (req, res) => {
 
     res.status(200).json({
       message: "Login successful",
-      user: {
+      user: { 
         id: user._id,
         fullName: user.fullName,
         penName: user.penName,
