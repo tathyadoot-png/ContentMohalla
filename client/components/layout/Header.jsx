@@ -24,7 +24,7 @@ import { LuBookmarkPlus } from "react-icons/lu";
 import { HiOutlineLogout, HiOutlineLogin } from "react-icons/hi";
 
 const navItems = [
-  { name: "Home", path: "/", icon: FaBookOpen },
+  { name: "मुख्य पृष्ठ", path: "/", icon: FaBookOpen },
   { name: "गद्य", path: "/gadhya", icon: FaFeatherAlt },
   { name: "काव्य", path: "/kavya", icon: FaFeatherAlt },
   { name: "बोली", path: "/languages", icon: FaGlobeAsia },
@@ -56,15 +56,6 @@ export default function Header({ theme, toggleTheme }) {
     checkUser();
   }, []);
 
-  useEffect(() => {
-    const onScroll = () => {
-      setIsScrolled(window.scrollY > SCROLL_THRESHOLD);
-    };
-    if (typeof window !== "undefined") onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   const handleLogout = async () => {
     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
       method: "POST",
@@ -77,11 +68,12 @@ export default function Header({ theme, toggleTheme }) {
   return (
     <>
       {/* MAIN HEADER */}
-      <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? "backdrop-blur-sm bg-white/85 dark:bg-black/70 shadow-md" : "bg-transparent"
-          }`}
-        role="banner"
-      >
+<header
+  className="sticky top-0 z-50 bg-white dark:bg-black shadow transition-all duration-300"
+  role="banner"
+>
+
+
         <div className="max-w-7xl mx-auto flex gap-4 items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12 h-20">
           {/* LOGO */}
           <a href="/" className="flex items-center ">

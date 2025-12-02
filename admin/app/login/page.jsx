@@ -70,7 +70,7 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="bg-card p-8 rounded shadow-md w-96 border border-custom"
       >
-        <h1 className="text-2xl font-bold mb-4 text-primary">Admin Login//</h1>
+        <h1 className="text-2xl font-bold mb-4 text-primary">Admin Login</h1>
         {error && <p className="text-accent mb-2">{error}</p>}
 
         <input

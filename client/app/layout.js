@@ -68,23 +68,29 @@ export default function RootLayout({ children }) {
         />
       </head>
 
-      <body className={`transition-all duration-400 ease-in-out min-h-screen`}>
-        <Header theme={theme} toggleTheme={toggleTheme} />
-        <SearchProvider>{children}</SearchProvider>
-        <Footer />
+    <body className={`transition-all duration-400 ease-in-out min-h-screen`}>
+    <Header theme={theme} toggleTheme={toggleTheme} />
 
-        {showScrollTop && (
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className={`fixed bottom-5 right-5 p-3 rounded-full shadow-lg transition-transform duration-300 ${
-              theme === "dark" ? "bg-black text-orange-400 border border-orange-600" : "bg-orange-500 text-white"
-            }`}
-            aria-label="scroll to top"
-          >
-            <FaArrowUp />
-          </button>
-        )}
-      </body>
+    {/* बस CHILDREN – extra top bar/line हटा दी */}
+    <SearchProvider>{children}</SearchProvider>
+
+    <Footer />
+
+    {showScrollTop && (
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className={`fixed bottom-5 right-5 p-3 rounded-full shadow-lg transition-transform duration-300 ${
+          theme === "dark"
+            ? "bg-black text-orange-400 border border-orange-600"
+            : "bg-orange-500 text-white"
+        }`}
+        aria-label="scroll to top"
+      >
+        <FaArrowUp />
+      </button>
+    )}
+</body>
+
     </html>
   );
 }
