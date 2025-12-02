@@ -32,6 +32,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       // `login` should perform the credential exchange (and server should set httpOnly cookie)
+      // If AuthContext.login doesn't set cookie using credentials, consider replacing it with:
+      // await api.post("/auth/login", { email, password });
       await login(email, password);
 
       // After login, verify server-side session (cookie)
@@ -55,7 +57,8 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error("Login failed:", err);
-      setError(err.message || "Login failed!");
+      const msg = err?.response?.data?.message || err?.message || "Login failed!";
+      setError(msg);
     } finally {
       setLoading(false);
     }

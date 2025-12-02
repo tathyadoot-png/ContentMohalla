@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import api from "@/utils/api"; // axios instance withCredentials: true
 
 export default function PoetrySiteLogin() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -14,22 +15,15 @@ export default function PoetrySiteLogin() {
     setForm((s) => ({ ...s, [name]: value }));
   }
 
-  async function fetchMe(apiBase) {
+  const fetchMe = async () => {
     try {
-     await fetch(`${API_BASE}/api/auth/login`, {
-  method: "POST",
-  credentials: "include",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email, password }),
-});
-
-      if (!meRes.ok) return null;
-      const meData = await meRes.json();
-      return meData.user || null;
-    } catch {
+      const res = await api.get("/auth/me");
+      const user = res.data?.user ?? res.data ?? null;
+      return user;
+    } catch (err) {
       return null;
     }
-  }
+  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -41,43 +35,35 @@ export default function PoetrySiteLogin() {
       return;
     }
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-    if (!API_BASE) {
-      setError("Server configuration missing. Please try later.");
-      return;
-    }
-
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-        credentials: "include", // 👈 important for cookies
-      });
+      // 1) Call login endpoint (server should set httpOnly cookie)
+      const res = await api.post("/auth/login", form); // axios sends credentials automatically
+      // If server returned non-200, axios will throw and go to catch
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        // server message if present
-        throw new Error(data?.message || "लॉगिन असफल हुआ");
+      // 2) Verify server-set cookie by calling /auth/me
+      const user = await fetchMe();
+      if (!user) {
+        throw new Error(
+          "सत्र सत्यापित नहीं हुआ — सर्वर ने cookie सेट नहीं किया या cookie अवैध है। DevTools → Network में /auth/login के response headers देखें।"
+        );
       }
-
-      // Verify session on client by calling /me (confirms server-set cookie)
-      const user = await fetchMe(API_BASE);
 
       setSuccess("लॉगिन सफल हुआ! स्वागत है।");
 
-      // Optional: if you want to store user in global context, do it here.
-      // Redirect using SPA navigation
-      setTimeout(() => {
-        // if you want to redirect to dashboard when logged in:
-        router.push("/");
-      }, 500);
+      // Optional: do something with user (store in context) if needed
 
+      // Redirect after short delay
+      setTimeout(() => {
+        router.push("/");
+      }, 400);
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.message || "लॉगिन असफल रहा, कृपया सही जानकारी दर्ज करें।");
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "लॉगिन असफल रहा, कृपया सही जानकारी दर्ज करें।";
+      setError(msg);
     } finally {
       setLoading(false);
     }
