@@ -185,13 +185,22 @@ const avatarUrl = req.file
 
 
 
+// const COOKIE_OPTIONS = {
+//   httpOnly: true,
+//   secure: process.env.NODE_ENV === "production",
+//   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+//   path: "/",
+//   maxAge: 7 * 24 * 60 * 60 * 1000,
+// };
+
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  secure: true,         // must be true in production (HTTPS)
+  sameSite: "none",     // cross-site support
   path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
+
 
 export const login = async (req, res) => {
   try {
