@@ -57,40 +57,36 @@ setLanguages(langs);
   };
 
   // 🟢 Update poem (PUT)
-  const handleUpdate = async () => {
-    const token = Cookies.get("adminToken");
-    if (!token) {
-      console.error("❌ No token found in cookies");
-      return;
+const handleUpdate = async () => {
+  // verify admin session using httpOnly cookie (sent automatically by axios instance)
+  try {
+    await api.get("/auth/me");
+  } catch (verifyErr) {
+    console.error("❌ Admin session not found");
+    return;
+  }
+
+  setUpdating(true);
+  try {
+    const formData = new FormData();
+    for (const key in poem) {
+      formData.append(key, poem[key]);
     }
 
-    setUpdating(true);
-    try {
-      const formData = new FormData();
-      for (const key in poem) {
-        formData.append(key, poem[key]);
-      }
+    // use axios instance — no manual Authorization header, cookie auto-sent
+    const res = await api.put(`/poems/admin/update/${poem._id}`, formData);
+    const data = res.data;
 
-      const res = await fetch(`${apiUrl}/api/poems/admin/update/${poem._id}`, {
-        method: "PUT",
-         credentials: "include",   
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Update failed");
-
-      alert("✅ Poem updated successfully!");
-      onUpdated();
-      onClose();
-    } catch (err) {
-      console.error("❌ Update error:", err);
-      alert("Update failed. Check console for details.");
-    } finally {
-      setUpdating(false);
-    }
-  };
+    alert("✅ Poem updated successfully!");
+    onUpdated();
+    onClose();
+  } catch (err) {
+    console.error("❌ Update error:", err);
+    alert(err?.response?.data?.message || "Update failed. Check console for details.");
+  } finally {
+    setUpdating(false);
+  }
+};
 
   if (!poem) return null;
 

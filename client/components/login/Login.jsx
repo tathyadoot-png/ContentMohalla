@@ -1,19 +1,34 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function PoetrySiteLogin() {
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((s) => ({ ...s, [name]: value }));
+  }
+
+  async function fetchMe(apiBase) {
+    try {
+     await fetch(`${API_BASE}/api/auth/login`, {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password }),
+});
+
+      if (!meRes.ok) return null;
+      const meData = await meRes.json();
+      return meData.user || null;
+    } catch {
+      return null;
+    }
   }
 
   async function handleSubmit(e) {
@@ -26,9 +41,14 @@ export default function PoetrySiteLogin() {
       return;
     }
 
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+    if (!API_BASE) {
+      setError("Server configuration missing. Please try later.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -38,20 +58,26 @@ export default function PoetrySiteLogin() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Login failed");
+      if (!res.ok) {
+        // server message if present
+        throw new Error(data?.message || "लॉगिन असफल हुआ");
+      }
 
-      // token cookies me aa rahi hai because credentials: "include"
-      console.log("Logged in via cookies");
+      // Verify session on client by calling /me (confirms server-set cookie)
+      const user = await fetchMe(API_BASE);
 
       setSuccess("लॉगिन सफल हुआ! स्वागत है।");
 
-      // Redirect to dashboard (if needed)
+      // Optional: if you want to store user in global context, do it here.
+      // Redirect using SPA navigation
       setTimeout(() => {
-        window.location.href = "/";
-      }, 1500);
+        // if you want to redirect to dashboard when logged in:
+        router.push("/");
+      }, 500);
+
     } catch (err) {
-      console.error(err);
-      setError("लॉगिन असफल रहा, कृपया सही जानकारी दर्ज करें।");
+      console.error("Login error:", err);
+      setError(err.message || "लॉगिन असफल रहा, कृपया सही जानकारी दर्ज करें।");
     } finally {
       setLoading(false);
     }
@@ -59,14 +85,7 @@ export default function PoetrySiteLogin() {
 
   return (
     <div className="min-h-full my-10 flex items-center justify-center px-4">
-      <div
-        className="
-          max-w-md w-full rounded-2xl overflow-hidden
-          border transition-colors shadow-md shadow-orange-300 hover:shadow-lg hover:shadow-orange-400 
-          bg-white dark:bg-black
-          
-        "
-      >
+      <div className="max-w-md w-full rounded-2xl overflow-hidden border transition-colors shadow-md bg-white dark:bg-black">
         <div className="p-10 text-center">
           <h2 className="text-2xl font-extrabold text-gray-700 dark:text-primary">
             <span className="text-orange-500">"मोहल्ले"</span> में पुनः स्वागत है
@@ -83,30 +102,20 @@ export default function PoetrySiteLogin() {
                 type="email"
                 value={form.email}
                 onChange={handleChange}
-                className="
-                  mt-1 block w-full rounded-lg p-2
-                  bg-white dark:bg-[#071014] text-gray-900 dark:text-gray-100
-                  border border-[rgba(255,107,0,0.20)] dark:border-[rgba(255,107,0,0.28)]
-                  shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
-                "
+                className="mt-1 block w-full rounded-lg p-2 bg-white dark:bg-[#071014] text-gray-900 dark:text-gray-100 border border-[rgba(255,107,0,0.20)] shadow-sm focus:outline-none"
                 placeholder="example@gmail.com"
                 required
               />
             </label>
 
             <label className="block">
-              <span className="text-sm text-primary ">पासवर्ड</span>
+              <span className="text-sm text-primary">पासवर्ड</span>
               <input
                 name="password"
                 type="password"
                 value={form.password}
                 onChange={handleChange}
-                className="
-                  mt-1 block w-full rounded-lg p-2
-                  bg-white dark:bg-[#071014] text-gray-900 dark:text-gray-100
-                  border border-[rgba(255,107,0,0.20)] dark:border-[rgba(255,107,0,0.28)]
-                  shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgba(255,107,0,0.18)]
-                "
+                className="mt-1 block w-full rounded-lg p-2 bg-white dark:bg-[#071014] text-gray-900 dark:text-gray-100 border border-[rgba(255,107,0,0.20)] shadow-sm focus:outline-none"
                 placeholder="पासवर्ड"
                 required
               />
@@ -118,13 +127,8 @@ export default function PoetrySiteLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="
-                w-full py-2 rounded-lg font-semibold shadow-md
-               bg-orange-400
-                 hover:bg-orange-500 text-white
-                disabled:opacity-60 disabled:cursor-not-allowed
-                transition
-              "
+              className="w-full py-2 rounded-lg font-semibold shadow-md bg-orange-400 hover:bg-orange-500 text-white disabled:opacity-60 disabled:cursor-not-allowed transition"
+              aria-busy={loading}
             >
               {loading ? "लॉगिन जारी है..." : "लॉगिन करें"}
             </button>
@@ -136,8 +140,6 @@ export default function PoetrySiteLogin() {
               यहाँ पंजीकरण करें
             </a>
           </p>
-
-          
         </div>
       </div>
     </div>

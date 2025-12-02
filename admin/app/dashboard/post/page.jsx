@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import Swal from "sweetalert2";
+import api from "@/utils/api"; // axios instance with withCredentials: true
 
 /**
  * AdminPostForm
@@ -42,16 +42,24 @@ export default function AdminPostForm({ poemId = null, poemData = null, onUpdate
   const [loading, setLoading] = useState(false);
   const [fetchingPoem, setFetchingPoem] = useState(false);
 
-  // fetch languages once
+  // fetch languages once (prefer axios, fallback to fetch)
   useEffect(() => {
     const fetchLanguages = async () => {
       try {
-        const res = await fetch(`${apiUrl}/api/languages`);
-        const data = await res.json();
+        const res = await api.get("/languages");
+        const data = res.data;
         const langs = Array.isArray(data) ? data : data.languages || data.data || [];
         setLanguages(langs);
       } catch (err) {
-        console.error("Error fetching languages:", err);
+        console.warn("api.get /languages failed, falling back to fetch:", err);
+        try {
+          const r = await fetch(`${apiUrl.replace(/\/$/, "")}/api/languages`);
+          const d = await r.json();
+          const langs = Array.isArray(d) ? d : d.languages || d.data || [];
+          setLanguages(langs);
+        } catch (e) {
+          console.error("Error fetching languages (fallback):", e);
+        }
       }
     };
     fetchLanguages();
@@ -82,8 +90,7 @@ export default function AdminPostForm({ poemId = null, poemData = null, onUpdate
           (Array.isArray(poem.languages) && (poem.languages[0]?.subLanguageName || poem.languages[0]?.subLanguage)) ||
           poem.subLanguage ||
           "",
-       userUniqueId: poem.userUniqueId || poem.writerId?.uniqueId || poem.writerId?._id || "",
-
+        userUniqueId: poem.userUniqueId || poem.writerId?.uniqueId || poem.writerId?._id || "",
         videoLink: poem.videoLink || poem.video || "",
         date: poem.date ? String(poem.date).split("T")[0] : poem.createdAt ? String(poem.createdAt).split("T")[0] : "",
       });
@@ -108,13 +115,24 @@ export default function AdminPostForm({ poemId = null, poemData = null, onUpdate
       fillFromPoem(poemData);
     } else if (poemId) {
       setFetchingPoem(true);
-      fetch(`${apiUrl}/api/poems/${poemId}`)
-        .then((r) => r.json())
-        .then((data) => {
-          const poem = data.poem || data;
+      // prefer axios
+      api
+        .get(`/poems/${poemId}`)
+        .then((r) => {
+          const poem = r.data?.poem || r.data;
           fillFromPoem(poem);
         })
-        .catch((err) => console.error("Failed to fetch poem:", err))
+        .catch((err) => {
+          console.warn("api.get /poems/:id failed, falling back to fetch:", err);
+          // fallback to fetch
+          fetch(`${apiUrl.replace(/\/$/, "")}/api/poems/${poemId}`)
+            .then((r) => r.json())
+            .then((data) => {
+              const poem = data.poem || data;
+              fillFromPoem(poem);
+            })
+            .catch((e) => console.error("Failed to fetch poem (fallback):", e));
+        })
         .finally(() => setFetchingPoem(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -158,57 +176,69 @@ export default function AdminPostForm({ poemId = null, poemData = null, onUpdate
     setLoading(true);
 
     try {
-      const adminToken = Cookies.get("adminToken");
-      if (!adminToken) {
+      // --- 1) verify session (server-set cookie) ---
+      let me = null;
+      try {
+        const meRes = await api.get("/auth/me");
+        me = meRes.data?.user || meRes.data || null;
+      } catch (err) {
+        console.warn("/auth/me verify failed:", err);
+        me = null;
+      }
+
+      if (!me || me.role !== "admin") {
         Swal.fire({
           icon: "error",
           title: "Not authorized",
-          text: "No admin token found",
+          text: "सत्र मान्य नहीं है — कृपया फिर लॉगिन करें।",
         });
         setLoading(false);
         return;
       }
 
+      // --- 2) build FormData (same as before) ---
       const fd = new FormData();
 
-      // append text fields
-      const allowedText = ["title", "content", "category", "subcategory", "userUniqueId", "videoLink", "date"];
+      const allowedText = [
+        "title",
+        "content",
+        "category",
+        "subcategory",
+        "userUniqueId",
+        "videoLink",
+        "date",
+      ];
       allowedText.forEach((k) => {
         const v = formData[k];
         if (v !== undefined && v !== null && v !== "") fd.append(k, v);
       });
 
-      // languages
       const languageData = [{ mainLanguage: formData.mainLanguage, subLanguageName: formData.subLanguage }];
       fd.append("languages", JSON.stringify(languageData));
       fd.append("isAdminPost", "true");
       fd.append("status", "approved");
 
-      // append files only if real File selected
       if (image && image instanceof File) fd.append("image", image);
       if (audio && audio instanceof File) fd.append("audio", audio);
       if (video && video instanceof File) fd.append("video", video);
 
-      // debug
-      for (const pair of fd.entries()) {
-        console.log("FormData:", pair[0], pair[1]);
+      // debug (optional)
+      // for (const pair of fd.entries()) console.log("FormData:", pair[0], pair[1]);
+
+      // --- 3) send request via axios (preferred) ---
+      const isEdit = poemId !== null && poemId !== undefined;
+      let axiosRes;
+      if (isEdit) {
+        axiosRes = await api.put(`/poems/admin/update/${poemId}`, fd);
+      } else {
+        axiosRes = await api.post("/poems/create", fd);
       }
 
-      const isEdit = poemId !== null && poemId !== undefined;
-      const url = isEdit ? `${apiUrl}/api/poems/admin/update/${poemId}` : `${apiUrl}/api/poems/create`;
-      const method = isEdit ? "PUT" : "POST";
+      const data = axiosRes?.data;
 
-      const res = await fetch(url, {
-        method,
-        credentials: "include",
-        headers: { Authorization: `Bearer ${adminToken}` },
-        body: fd,
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
+      if (!axiosRes || (data && data.success === false)) {
         console.error("Server error response:", data);
-        throw new Error(data.message || "Server error");
+        throw new Error(data?.message || "Server error");
       }
 
       Swal.fire({
@@ -240,10 +270,11 @@ export default function AdminPostForm({ poemId = null, poemData = null, onUpdate
       if (typeof onClose === "function") onClose();
     } catch (err) {
       console.error("Save error:", err);
+      const msg = err?.response?.data?.message || err?.message || "Error saving post";
       Swal.fire({
         icon: "error",
         title: "Save failed",
-        text: err.message || "Error saving post",
+        text: msg,
       });
     } finally {
       setLoading(false);
@@ -289,10 +320,11 @@ export default function AdminPostForm({ poemId = null, poemData = null, onUpdate
             <label className="font-medium text-gray-700 mb-2">Main Language Category</label>
             <select name="mainLanguage" value={formData.mainLanguage} onChange={handleMainLanguageChange} className="border p-3 rounded-md w-full">
               <option value="">Select Main Language</option>
-              {languages.map((lang) => <option key={lang._id} value={lang.mainCategory || lang.name}>
-  {lang.mainCategory || lang.name}
-</option>
-)}
+              {languages.map((lang) => (
+                <option key={lang._id} value={lang.mainCategory || lang.name}>
+                  {lang.mainCategory || lang.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -300,10 +332,11 @@ export default function AdminPostForm({ poemId = null, poemData = null, onUpdate
             <label className="font-medium text-gray-700 mb-2">Sub Language</label>
             <select name="subLanguage" value={formData.subLanguage} onChange={(e) => setFormData(p => ({ ...p, subLanguage: e.target.value }))} disabled={!formData.mainLanguage} className="border p-3 rounded-md w-full">
               <option value="">{formData.mainLanguage ? "Select Sub Language" : "Select Main First"}</option>
-              {subLanguages?.map((s) => <option key={s._id || s.name} value={s.name}>
-  {s.name}
-</option>
-)}
+              {subLanguages?.map((s) => (
+                <option key={s._id || s.name} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>

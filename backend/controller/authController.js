@@ -183,88 +183,83 @@ const avatarUrl = req.file
 };
 
 
-export const loginUser = async (req, res) => {
+
+
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  path: "/",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(400).json({ message: "Please enter both email and password" });
 
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // decide cookie name
-    const cookieName = user.role === "admin" ? "adminToken" : "userToken";
-
-    // set cookie using shared options
-    res.cookie(cookieName, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/",
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
     });
 
-    // clear the other role cookie to avoid stale cookie
-    if (cookieName === "adminToken") res.clearCookie("userToken", { path: "/" });
-    else res.clearCookie("adminToken", { path: "/" });
+    const cookieName = user.role === "admin" ? "adminToken" : "userToken";
 
-    res.status(200).json({
+    // Set server-side httpOnly cookie
+    res.cookie(cookieName, token, COOKIE_OPTIONS);
+
+    // Aggressively clear the other cookie to avoid stale collisions (same options)
+    if (cookieName === "adminToken") {
+      res.cookie("userToken", "", { ...COOKIE_OPTIONS, maxAge: 0 });
+      res.clearCookie("userToken", COOKIE_OPTIONS);
+    } else {
+      res.cookie("adminToken", "", { ...COOKIE_OPTIONS, maxAge: 0 });
+      res.clearCookie("adminToken", COOKIE_OPTIONS);
+    }
+
+    // Optionally log for debug (remove in production)
+    console.log("➡️ Set cookie:", cookieName, "token(20):", token?.slice(0, 20));
+
+    // return safe user data (no passwords). Do NOT return token unless you need it client-side.
+    return res.status(200).json({
       message: "Login successful",
-      user: { 
+      user: {
         id: user._id,
         fullName: user.fullName,
         penName: user.penName,
         email: user.email,
         role: user.role,
-        phone: user.phone,
-        bio: user.bio,
-        tagline: user.tagline,
-        profession: user.profession,
-        location: user.location,
-        avatar: user.avatar,
         uniqueId: user.uniqueId,
-        socialLinks: user.socialLinks,
       },
-      token, // frontend can use this if it needs client-side access
     });
   } catch (err) {
-    console.error("❌ Login error =>", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Login error:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
-
 export const logoutUser = (req, res) => {
-  const cookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  path: "/",
+  try {
+    // clear both cookies on API domain using same options
+    res.cookie("userToken", "", { ...COOKIE_OPTIONS, maxAge: 0 });
+    res.clearCookie("userToken", COOKIE_OPTIONS);
+    res.cookie("adminToken", "", { ...COOKIE_OPTIONS, maxAge: 0 });
+    res.clearCookie("adminToken", COOKIE_OPTIONS);
+
+    return res.json({ success: true, message: "Logged out" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    return res.status(500).json({ success: false, message: "Logout failed" });
+  }
 };
-
-// setting
-res.cookie(cookieName, token, cookieOptions);
-
-// clearing (use same options)
-res.clearCookie("userToken", cookieOptions);
-res.clearCookie("adminToken", cookieOptions);
-
-};
-
 
 export const getLoggedInUser = (req, res) => {
   if (!req.user) return res.json({ success: false });
-
-  res.json({
-    success: true,
-    user: req.user,
-  });
+  res.json({ success: true, user: req.user });
 };

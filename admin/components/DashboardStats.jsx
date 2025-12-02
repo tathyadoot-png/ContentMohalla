@@ -1,7 +1,7 @@
 // components/admin/DashboardStats.jsx
 "use client";
 import React, { useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import api from "@/utils/api"; // ← जरूरी: axios instance (withCredentials: true)
 import {
   FiUsers,
   FiFileText,
@@ -21,50 +21,45 @@ export default function DashboardStats({ apiBase = "" }) {
   useEffect(() => {
     let mounted = true;
     const controller = new AbortController();
+
     const load = async () => {
       setLoading(true);
       setErr("");
       try {
-        // Read admin token from cookie (change key if yours is different)
-        const adminToken = Cookies.get("adminToken");
-        if (!adminToken) {
-          throw new Error("Admin token not found. Please login as admin.");
+        // verify admin session using server-side httpOnly cookie
+        try {
+          await api.get("/auth/me");
+        } catch (verifyErr) {
+          const msg = verifyErr?.response?.data?.message || verifyErr?.message || "Admin session not found. Please login as admin.";
+          throw new Error(msg);
         }
 
-        const res = await fetch(`${API_BASE}/api/admin/stats`, {
-          method: "GET",
-          credentials: "include",
+        // fetch stats via axios instance (withCredentials: true)
+        const res = await api.get("/admin/stats", {
           signal: controller.signal,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${adminToken}`,
-          },
         });
 
-        // safe parse body
-        const text = await res.text().catch(() => "");
-        let body = {};
-        try {
-          body = text ? JSON.parse(text) : {};
-        } catch (e) {
-          body = { message: text };
-        }
-
-        if (!res.ok) {
-          // give more helpful messages for common statuses
-          if (res.status === 401 || res.status === 403) {
-            throw new Error(body.message || "Unauthorized. Token may be invalid or expired.");
-          }
-          throw new Error(body.message || `Fetch failed: ${res.status}`);
-        }
+        const body = res.data || {};
 
         if (!mounted) return;
-        setStats(body.data || null);
+        setStats(body.data || body || null);
       } catch (e) {
         if (!mounted) return;
         if (e.name === "AbortError") return;
+
+        let message = e.message || "Failed to load stats";
+        if (e.response) {
+          const status = e.response.status;
+          const respMsg = e.response.data?.message;
+          if (status === 401 || status === 403) {
+            message = respMsg || "Unauthorized. Session may be invalid or expired.";
+          } else {
+            message = respMsg || `Fetch failed: ${status}`;
+          }
+        }
+
         console.error("DashboardStats fetch error:", e);
-        setErr(e.message || "Failed to load stats");
+        setErr(message);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -75,6 +70,7 @@ export default function DashboardStats({ apiBase = "" }) {
       mounted = false;
       controller.abort();
     };
+    // keeping API_BASE in deps for parity though api uses its own baseURL
   }, [API_BASE]);
 
   if (loading) return <div className="p-6">Loading stats...</div>;

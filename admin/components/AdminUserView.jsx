@@ -1,7 +1,7 @@
 // components/admin/AdminUsersList.jsx
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import Cookies from "js-cookie";
+import api from "@/utils/api"; // ✅ axios instance withCredentials: true
 import { FiSearch, FiEye, FiX } from "react-icons/fi";
 
 const ACCENT = "text-[#B83D43]";
@@ -58,42 +58,26 @@ const AdminUsersList = ({ apiBase = "" }) => {
     setLoading(true);
     setError("");
     try {
-      const adminToken = Cookies.get("adminToken"); // <-- read token from cookie
-      if (!adminToken) {
+      // verify admin session using server-side httpOnly cookie (axios instance will send cookie automatically)
+      try {
+        await api.get("/auth/me");
+      } catch (verifyErr) {
         setUsers([]);
         setLoading(false);
-        setError("Admin token not found. Please login as admin.");
+        setError("Admin session not found. Please login as admin.");
         return;
       }
 
-      const params = new URLSearchParams();
-      params.set("page", page);
-      params.set("limit", limit);
-      if (query) params.set("search", query);
+      const params = {
+        page,
+        limit,
+      };
+      if (query) params.search = query;
 
-      const url = `${API_BASE.replace(/\/$/, "")}/api/admin/users?${params.toString()}`;
+      // use axios instance (baseURL + withCredentials are configured in "@/utils/api")
+      const res = await api.get("/admin/users", { params });
 
-      const res = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${adminToken}`,
-        },
-      });
-
-      // attempt to read JSON body safely
-      const text = await res.text().catch(() => "");
-      let body = {};
-      try {
-        body = text ? JSON.parse(text) : {};
-      } catch (e) {
-        body = { message: text };
-      }
-
-      if (!res.ok) {
-        throw new Error(body?.message || `Fetch failed: ${res.status}`);
-      }
+      const body = res.data || {};
 
       const fetched = body.users || [];
       // ensure newest users appear on top
@@ -102,7 +86,8 @@ const AdminUsersList = ({ apiBase = "" }) => {
       setMeta(body.meta || { total: 0, page, totalPages: 1, limit });
     } catch (err) {
       console.error("fetchUsers error:", err);
-      setError(err.message || "Failed to load users");
+      const errMsg = err?.response?.data?.message || err.message || "Failed to load users";
+      setError(errMsg);
       setUsers([]);
     } finally {
       setLoading(false);

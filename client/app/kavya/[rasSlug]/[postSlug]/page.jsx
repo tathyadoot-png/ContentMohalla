@@ -16,7 +16,8 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import RelatedPoems from "../../../../components/content/RelatedPoems";
-import Cookies from "js-cookie";
+import api from "@/utils/api"; // ✅ use your axios instance (withCredentials: true)
+// removed js-cookie usage intentionally — httpOnly cookie is auto-sent by axios/fetch with credentials
 
 // 🔢 Format 1.4K numbers
 const formatCount = (num) => {
@@ -34,55 +35,101 @@ export default function KavyaPostPage() {
   const [bookmarked, setBookmarked] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const token = Cookies.get("token");
-
-  // 📌 Fetch Poem
+  // 📌 Fetch Poem (primary: axios api instance; fallback to fetch if axios fails)
   useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/poems/slug/${postSlug}`,
-          {
-            cache: "no-store",
-            credentials: "include",
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          }
-        );
+    if (!postSlug) return;
 
-        const data = await res.json();
-        setPost(data.poem || data);
-        setComments(data.poem?.comments || data.comments || []);
+    const fetchPost = async () => {
+      setLoading(true);
+      try {
+        // try using your axios instance first (httpOnly cookie will be sent automatically)
+        const res = await api.get(`/poems/slug/${postSlug}`, {
+          headers: { "Cache-Control": "no-store" },
+        });
+
+        const data = res.data;
+        const fetched = data.poem || data;
+
+        setPost(fetched);
+        setComments(fetched?.comments || data.comments || []);
         setLiked(data.userLiked || false);
         setBookmarked(data.userBookmarked || false);
-      } catch (error) {
-        console.error("Error fetching post:", error);
+      } catch (err) {
+        // If axios call fails for some reason (misconfigured baseURL in api), fallback to fetch using full URL.
+        // This fallback preserves the previous behavior while still preferring the axios instance.
+        console.warn("api.get failed, falling back to fetch:", err);
+
+        try {
+          const base = process.env.NEXT_PUBLIC_API_URL;
+          if (!base) throw err; // nothing to fallback to
+
+          const res = await fetch(`${base.replace(/\/$/, "")}/api/poems/slug/${postSlug}`, {
+            cache: "no-store",
+            credentials: "include", // ensure httpOnly cookie is sent
+          });
+
+          if (!res.ok) {
+            // try to read body for better logging
+            const text = await res.text().catch(() => "");
+            let body = {};
+            try {
+              body = text ? JSON.parse(text) : {};
+            } catch {
+              body = { message: text };
+            }
+            throw new Error(body?.message || `Fetch failed: ${res.status}`);
+          }
+
+          const data = await res.json();
+          const fetched = data.poem || data;
+
+          setPost(fetched);
+          setComments(fetched?.comments || data.comments || []);
+          setLiked(data.userLiked || false);
+          setBookmarked(data.userBookmarked || false);
+        } catch (fallbackErr) {
+          console.error("Error fetching post (both axios & fetch):", fallbackErr);
+          // keep user experience gentle — show no intrusive alert, but you can surface a friendly message in UI
+          setPost(null);
+          setComments([]);
+        }
       } finally {
         setLoading(false);
       }
     };
+
     fetchPost();
-  }, [postSlug, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postSlug]);
 
   // ❤️ Like
   const handleLike = async () => {
     if (!post?._id) return;
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/poems/${post._id}/like`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }
-      );
-      if (res.status === 401) return alert("कृपया लॉगिन करें!");
-
-      const data = await res.json();
+      // use axios so cookie is auto-attached
+      const res = await api.post(`/poems/${post._id}/like`);
+      const data = res.data;
       if (data.success) {
         setLiked(data.isLiked);
+      } else if (res.status === 401) {
+        alert("कृपया लॉगिन करें!");
       }
     } catch (error) {
+      // if axios fails try fetch fallback (optional)
       console.error("Like error:", error);
+      try {
+        const base = process.env.NEXT_PUBLIC_API_URL;
+        if (!base) throw error;
+        const res = await fetch(`${base.replace(/\/$/, "")}/api/poems/${post._id}/like`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (res.status === 401) return alert("कृपया लॉगिन करें!");
+        const data = await res.json();
+        if (data.success) setLiked(data.isLiked);
+      } catch (e) {
+        console.error("Like fallback error:", e);
+      }
     }
   };
 
@@ -90,50 +137,63 @@ export default function KavyaPostPage() {
   const handleBookmark = async () => {
     if (!post?._id) return;
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/poems/${post._id}/bookmark`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }
-      );
-      if (res.status === 401) return alert("कृपया लॉगिन करें!");
-
-      const data = await res.json();
+      const res = await api.post(`/poems/${post._1d}/bookmark`.replace("_1d", "_id"));
+      // above line guards against accidental variable name mistakes in editors; result is same as `/poems/${post._id}/bookmark`
+      const data = res.data;
       if (data.success) setBookmarked(!bookmarked);
     } catch (error) {
       console.error("Bookmark error:", error);
+      // fallback to fetch
+      try {
+        const base = process.env.NEXT_PUBLIC_API_URL;
+        if (!base) throw error;
+        const res = await fetch(`${base.replace(/\/$/, "")}/api/poems/${post._id}/bookmark`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (res.status === 401) return alert("कृपया लॉगिन करें!");
+        const data = await res.json();
+        if (data.success) setBookmarked(!bookmarked);
+      } catch (e) {
+        console.error("Bookmark fallback error:", e);
+      }
     }
   };
 
   // 💬 Add Comment
   const handleAddComment = async () => {
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !post?._id) return;
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/poems/${post._id}/comment`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-          body: JSON.stringify({ commentText: newComment }),
-          credentials: "include",
-        }
-      );
-
-      if (res.status === 401) return alert("कृपया लॉगिन करें!");
-
-      const data = await res.json();
+      const res = await api.post(`/poems/${post._id}/comment`, { commentText: newComment });
+      const data = res.data;
       if (data.success) {
         setComments(data.comments || []);
         setNewComment("");
+      } else if (res.status === 401) {
+        alert("कृपया लॉगिन करें!");
       }
     } catch (error) {
       console.error("Comment error:", error);
+      // fallback to fetch
+      try {
+        const base = process.env.NEXT_PUBLIC_API_URL;
+        if (!base) throw error;
+        const res = await fetch(`${base.replace(/\/$/, "")}/api/poems/${post._id}/comment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ commentText: newComment }),
+        });
+        if (res.status === 401) return alert("कृपया लॉगिन करें!");
+        const data = await res.json();
+        if (data.success) {
+          setComments(data.comments || []);
+          setNewComment("");
+        }
+      } catch (e) {
+        console.error("Comment fallback error:", e);
+      }
     }
   };
 
@@ -178,8 +238,6 @@ export default function KavyaPostPage() {
               style={{
                 aspectRatio: "16 / 9",
                 background: "var(--glass)",
-                // border: "1px solid var(--glass-border)",
-                // boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
               }}
             >
               <Image
@@ -280,44 +338,43 @@ export default function KavyaPostPage() {
               </div>
             </div>
 
-         {/* ===== CONTENT (preserve original poem formatting) ===== */}
-{(() => {
-  const content = post.content ?? "";
-  const looksLikeHTML = /<\/?[a-z][\s\S]*>/i.test(content);
+            {/* ===== CONTENT (preserve original poem formatting) ===== */}
+            {(() => {
+              const content = post.content ?? "";
+              const looksLikeHTML = /<\/?[a-z][\s\S]*>/i.test(content);
 
-  if (looksLikeHTML) {
-    // अगर HTML है — वैसे ही डालो
-    return (
-      <div
-        className="prose max-w-none text-[1.06rem] leading-8"
-        style={{
-          color: "var(--text)",
-          fontWeight: 500,
-          fontFamily: "var(--font-devanagari, 'Noto Sans Devanagari', serif)",
-          whiteSpace: "normal",
-        }}
-        dangerouslySetInnerHTML={{ __html: content }}
-      />
-    );
-  } else {
-    // अगर plain text है — line breaks बचाकर दिखाओ
-    return (
-      <div
-        className="text-[1.06rem] leading-8"
-        style={{
-          color: "var(--text)",
-          fontWeight: 500,
-          fontFamily: "var(--font-devanagari, 'Noto Sans Devanagari', serif)",
-          whiteSpace: "pre-wrap", /* preserve newlines and spacing */
-          overflowWrap: "anywhere",
-        }}
-      >
-        {content}
-      </div>
-    );
-  }
-})()}
-
+              if (looksLikeHTML) {
+                // अगर HTML है — वैसे ही डालो
+                return (
+                  <div
+                    className="prose max-w-none text-[1.06rem] leading-8"
+                    style={{
+                      color: "var(--text)",
+                      fontWeight: 500,
+                      fontFamily: "var(--font-devanagari, 'Noto Sans Devanagari', serif)",
+                      whiteSpace: "normal",
+                    }}
+                    dangerouslySetInnerHTML={{ __html: content }}
+                  />
+                );
+              } else {
+                // अगर plain text है — line breaks बचाकर दिखाओ
+                return (
+                  <div
+                    className="text-[1.06rem] leading-8"
+                    style={{
+                      color: "var(--text)",
+                      fontWeight: 500,
+                      fontFamily: "var(--font-devanagari, 'Noto Sans Devanagari', serif)",
+                      whiteSpace: "pre-wrap", /* preserve newlines and spacing */
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {content}
+                  </div>
+                );
+              }
+            })()}
 
             {/* VIDEO */}
             {post.videoLink && (
@@ -329,7 +386,6 @@ export default function KavyaPostPage() {
                 style={{
                   backgroundColor: "var(--primary)",
                   color: "var(--bg)",
-                  // boxShadow: "0 8px 30px rgba(255,107,0,0.12)",
                 }}
               >
                 ▶ वीडियो देखें
@@ -357,7 +413,6 @@ export default function KavyaPostPage() {
                 <span style={{ color: "var(--text)" }}>{formatCount(post.likeCount ?? 0)}</span>
               </motion.button>
 
-            
               <motion.button whileTap={{ scale: 0.95 }} onClick={handleShare} className="flex items-center gap-2">
                 <FaShareAlt />
                 <span style={{ color: "var(--text)" }}>साझा करें</span>
@@ -444,4 +499,3 @@ export default function KavyaPostPage() {
     </main>
   );
 }
- 

@@ -2,7 +2,7 @@
 import { useState, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/context/AuthContext";
-import Cookies from "js-cookie";
+import api from "@/utils/api"; // axios instance (withCredentials: true)
 
 export default function LoginPage() {
   const { login } = useContext(AuthContext);
@@ -11,22 +11,53 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Verify session by asking server for current user — httpOnly cookie will be sent automatically
+  const verifySession = async () => {
+    try {
+      const res = await api.get("/auth/me");
+      // assume server returns { user: { ... } } or user directly
+      const user = res.data?.user ?? res.data ?? null;
+      return user;
+    } catch (err) {
+      // not authenticated / session invalid
+      return null;
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
     try {
-      const res = await login(email, password);
-      console.log("✅ Login Response:", res);
+      // `login` should perform the credential exchange (and server should set httpOnly cookie)
+      await login(email, password);
 
-      // ✅ Ensure it's admin
-      if (res.user.role === "admin") {
-        Cookies.set("adminToken", res.token, { expires: 1 }); 
+      // After login, verify server-side session (cookie)
+      const apiUser = await verifySession();
+
+      if (!apiUser) {
+        // session cookie not present or invalid
+        setError(
+          "सत्र सत्यापित नहीं हुआ — सर्वर ने cookie नहीं सेट किया या cookie अवैध है। DevTools → Network में login response के headers देखें।"
+        );
+        console.error("Login returned, but /auth/me returned null. Server cookie may be missing.");
+        setLoading(false);
+        return;
+      }
+
+      // Ensure role is admin before routing
+      if (apiUser.role === "admin") {
         router.push("/dashboard");
       } else {
         setError("Access denied. Admins only!");
       }
     } catch (err) {
+      console.error("Login failed:", err);
       setError(err.message || "Login failed!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,8 +100,9 @@ export default function LoginPage() {
         <button
           type="submit"
           className="w-full bg-accent text-secondary p-2 rounded hover-accent transition-colors"
+          disabled={loading}
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>

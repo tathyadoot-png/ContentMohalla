@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import Cookies from "js-cookie";
 import Swal from "sweetalert2";
+import api from "@/utils/api"; // axios instance withCredentials:true
+
 
 export default function AddUser({ onCreated = null, onClose = null }) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -43,77 +44,68 @@ export default function AddUser({ onCreated = null, onClose = null }) {
     if (inputRef.current) inputRef.current.value = "";
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.fullName.trim()) {
-      Swal.fire({ icon: "error", title: "Full name required", timer: 1400, showConfirmButton: false });
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!form.fullName.trim()) {
+    Swal.fire({ icon: "error", title: "Full name required", timer: 1400, showConfirmButton: false });
+    return;
+  }
+
+  setLoading(true);
+  try {
+    // server-verify current session (httpOnly cookie will be automatically sent by the axios instance)
+    try {
+      await api.get("/auth/me"); // throws if not authenticated
+    } catch (verifyErr) {
+      Swal.fire({ icon: "error", title: "Not authorized", text: "Admin session not found" });
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    try {
-      const adminToken = Cookies.get("adminToken");
-      if (!adminToken) {
-        Swal.fire({ icon: "error", title: "Not authorized", text: "Admin token not found" });
-        setLoading(false);
-        return;
-      }
+    const fd = new FormData();
+    fd.append("fullName", form.fullName.trim());
+    if (form.penName?.trim()) fd.append("penName", form.penName.trim());
+    if (form.email?.trim()) fd.append("email", form.email.trim().toLowerCase());
+    fd.append("role", form.role);
+    if (avatarFile) fd.append("avatar", avatarFile);
 
-      const fd = new FormData();
-      fd.append("fullName", form.fullName.trim());
-      if (form.penName?.trim()) fd.append("penName", form.penName.trim());
-      if (form.email?.trim()) fd.append("email", form.email.trim().toLowerCase());
-      fd.append("role", form.role);
-      if (avatarFile) fd.append("avatar", avatarFile);
+    // debug: optionally log entries (comment out in prod)
+    // for (const pair of fd.entries()) console.log("fd:", pair[0], pair[1]);
 
-      // debug: optionally log entries (comment out in prod)
-      // for (const pair of fd.entries()) console.log("fd:", pair[0], pair[1]);
+    // Use axios instance (withCredentials: true) so httpOnly cookie is automatically attached.
+    const response = await api.post("/auth/admin/create-user", fd);
+    const data = response.data;
 
-      const res = await fetch(`${apiUrl}/api/auth/admin/create-user`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-        },
-        body: fd,
-      });
+    // Success UI
+    Swal.fire({
+      icon: "success",
+      title: "User created",
+      html: `
+        <div style="text-align:left">
+          <p><strong>Assigned Email:</strong> ${data.email}</p>
+          <p><strong>Unique ID (password):</strong> ${data.uniqueId}</p>
+          <p style="font-size:12px;color:#666;margin-top:8px;">⚠️ Share credentials securely with the user.</p>
+        </div>
+      `,
+      confirmButtonText: "OK",
+    });
 
-      const data = await res.json();
-      if (!res.ok) {
-        console.error("Server error:", data);
-        throw new Error(data?.message || "Server error");
-      }
+    // expose returned info in UI if needed
+    if (typeof onCreated === "function") onCreated(data);
 
-      // Success UI
-      Swal.fire({
-        icon: "success",
-        title: "User created",
-        html: `
-          <div style="text-align:left">
-          
-            <p><strong>Assigned Email:</strong> ${data.email}</p>
-            <p><strong>Unique ID (password):</strong> ${data.uniqueId}</p>
-            <p style="font-size:12px;color:#666;margin-top:8px;">⚠️ Share credentials securely with the user.</p>
-          </div>
-        `,
-        confirmButtonText: "OK",
-      });
-
-      // expose returned info in UI if needed
-      if (typeof onCreated === "function") onCreated(data);
-
-      resetForm();
-    } catch (err) {
-      console.error("Create user error:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Create failed",
-        text: err.message || "Error creating user",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    resetForm();
+  } catch (err) {
+    console.error("Create user error:", err);
+    const errMsg = err?.response?.data?.message || err.message || "Error creating user";
+    Swal.fire({
+      icon: "error",
+      title: "Create failed",
+      text: errMsg,
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-xl mt-6">

@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import Cookies from "js-cookie";
+import api from "@/utils/api"; // axios instance withCredentials: true
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -18,29 +18,45 @@ const PoemLanguages = () => {
     subLanguages: [{ name: "", description: "" }],
   });
 
-  const getToken = () => Cookies.get("adminToken") || Cookies.get("token") || null;
+  // Verify admin session using server-side httpOnly cookie
+  const verifyAdmin = async () => {
+    try {
+      const res = await api.get("/auth/me");
+      const user = res.data?.user ?? res.data ?? null;
+      if (!user || user.role !== "admin") return null;
+      return user;
+    } catch (err) {
+      return null;
+    }
+  };
 
-  // ✅ Fetch all languages (public)
+  // Fetch all languages (prefer axios, fallback to fetch)
   const fetchLanguages = async () => {
     try {
-      const res = await fetch(`${apiUrl}/api/languages`);
-      const data = await res.json();
-
-      if (data.success && Array.isArray(data.languages)) {
-        setLanguages(data.languages);
-      } else {
+      const res = await api.get("/languages");
+      const data = res.data;
+      const langs = Array.isArray(data) ? data : data.languages || data.data || [];
+      setLanguages(langs);
+    } catch (err) {
+      // fallback to fetch if axios fails
+      try {
+        const r = await fetch(`${apiUrl.replace(/\/$/, "")}/api/languages`);
+        const d = await r.json();
+        const langs = Array.isArray(d) ? d : d.languages || d.data || [];
+        setLanguages(langs);
+      } catch (e) {
+        console.error("Error fetching languages:", e);
         setLanguages([]);
       }
-    } catch (error) {
-      console.error("Error fetching languages:", error);
     }
   };
 
   useEffect(() => {
     fetchLanguages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Handle edit
+  // Handle edit
   const handleEdit = (language) => {
     setEditingLanguage(language._id);
     setUpdatedData({
@@ -49,14 +65,14 @@ const PoemLanguages = () => {
     });
   };
 
-  // ✅ Handle input change for subLanguages
+  // Handle input change for subLanguages
   const handleSubLangChange = (index, field, value) => {
     const newSubLangs = [...updatedData.subLanguages];
-    newSubLangs[index][field] = value;
+    newSubLangs[index] = { ...newSubLangs[index], [field]: value };
     setUpdatedData({ ...updatedData, subLanguages: newSubLangs });
   };
 
-  // ✅ Add new sublanguage (in edit mode)
+  // Add new sublanguage (in edit mode)
   const handleAddSubLang = () => {
     setUpdatedData({
       ...updatedData,
@@ -64,48 +80,66 @@ const PoemLanguages = () => {
     });
   };
 
-  // ✅ Delete sublanguage (in edit mode)
+  // Delete sublanguage (in edit mode)
   const handleDeleteSubLang = (index) => {
     const newSubLangs = updatedData.subLanguages.filter((_, i) => i !== index);
     setUpdatedData({ ...updatedData, subLanguages: newSubLangs });
   };
 
-  // ✅ Update Language
+  // Update Language (protected)
   const handleUpdate = async (id) => {
-    const token = getToken();
-    if (!token) {
-      Swal.fire("Unauthorized", "Login required to update language.", "warning");
-      return;
-    }
-
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/api/languages/${id}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatedData),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        Swal.fire({ icon: "success", title: "Updated!", text: "Language updated successfully.", timer: 1500, showConfirmButton: false });
-        setEditingLanguage(null);
-        fetchLanguages();
-      } else {
-        Swal.fire("Error", data.message || "Update failed", "error");
+      const me = await verifyAdmin();
+      if (!me) {
+        Swal.fire("Unauthorized", "Login required (admin).", "warning");
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      Swal.fire("Error", error.message || "Network error", "error");
+
+      // prefer axios
+      try {
+        const res = await api.put(`/languages/${id}`, updatedData);
+        const data = res.data;
+        if (data.success) {
+          Swal.fire({ icon: "success", title: "Updated!", text: "Language updated successfully.", timer: 1500, showConfirmButton: false });
+          setEditingLanguage(null);
+          fetchLanguages();
+        } else {
+          Swal.fire("Error", data.message || "Update failed", "error");
+        }
+      } catch (err) {
+        // fallback to fetch if axios fails
+        console.warn("api.put /languages failed, falling back to fetch:", err);
+        try {
+          const r = await fetch(`${apiUrl.replace(/\/$/, "")}/api/languages/${id}`, {
+            method: "PUT",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedData),
+          });
+          const data = await r.json();
+          if (data.success) {
+            Swal.fire({ icon: "success", title: "Updated!", text: "Language updated successfully.", timer: 1500, showConfirmButton: false });
+            setEditingLanguage(null);
+            fetchLanguages();
+          } else {
+            Swal.fire("Error", data.message || "Update failed", "error");
+          }
+        } catch (e) {
+          console.error("Update fallback error:", e);
+          Swal.fire("Error", e.message || "Network error", "error");
+        }
+      }
+    } catch (e) {
+      console.error("Update error:", e);
+      Swal.fire("Error", e.message || "Network error", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Add New Language
+  // Add New Language (protected)
   const handleAddLanguage = async () => {
     if (!newLanguage.mainCategory.trim()) {
       Swal.fire("Error", "Main category cannot be empty!", "error");
@@ -118,37 +152,54 @@ const PoemLanguages = () => {
       return;
     }
 
-    const token = getToken();
-    if (!token) {
-      Swal.fire("Unauthorized", "Login required to add language.", "warning");
-      return;
-    }
-
+    setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/api/languages`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newLanguage),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        Swal.fire("Success", "Language added successfully!", "success");
-        setNewLanguage({ mainCategory: "", subLanguages: [{ name: "", description: "" }] });
-        fetchLanguages();
-      } else {
-        Swal.fire("Error", data.message || "Add failed", "error");
+      const me = await verifyAdmin();
+      if (!me) {
+        Swal.fire("Unauthorized", "Login required (admin).", "warning");
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      Swal.fire("Error", error.message || "Network error", "error");
+
+      try {
+        const res = await api.post("/languages", newLanguage);
+        const data = res.data;
+        if (data.success) {
+          Swal.fire("Success", "Language added successfully!", "success");
+          setNewLanguage({ mainCategory: "", subLanguages: [{ name: "", description: "" }] });
+          fetchLanguages();
+        } else {
+          Swal.fire("Error", data.message || "Add failed", "error");
+        }
+      } catch (err) {
+        // fallback to fetch
+        console.warn("api.post /languages failed, falling back to fetch:", err);
+        try {
+          const r = await fetch(`${apiUrl.replace(/\/$/, "")}/api/languages`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newLanguage),
+          });
+          const data = await r.json();
+          if (data.success) {
+            Swal.fire("Success", "Language added successfully!", "success");
+            setNewLanguage({ mainCategory: "", subLanguages: [{ name: "", description: "" }] });
+            fetchLanguages();
+          } else {
+            Swal.fire("Error", data.message || "Add failed", "error");
+          }
+        } catch (e) {
+          console.error("Add fallback error:", e);
+          Swal.fire("Error", e.message || "Network error", "error");
+        }
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ✅ Delete Language
+  // Delete Language (protected)
   const handleDeleteLanguage = async (id) => {
     const confirm = await Swal.fire({
       title: "Are you sure?",
@@ -162,31 +213,47 @@ const PoemLanguages = () => {
 
     if (!confirm.isConfirmed) return;
 
-    const token = getToken();
-    if (!token) {
-      Swal.fire("Unauthorized", "Login required to delete language.", "warning");
-      return;
-    }
-
+    setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/api/languages/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        Swal.fire("Deleted!", "Language deleted successfully.", "success");
-        fetchLanguages();
-      } else {
-        Swal.fire("Error", data.message || "Delete failed", "error");
+      const me = await verifyAdmin();
+      if (!me) {
+        Swal.fire("Unauthorized", "Login required (admin).", "warning");
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      Swal.fire("Error", error.message || "Network error", "error");
+
+      try {
+        const res = await api.delete(`/languages/${id}`);
+        const data = res.data;
+        if (data.success) {
+          Swal.fire("Deleted!", "Language deleted successfully.", "success");
+          fetchLanguages();
+        } else {
+          Swal.fire("Error", data.message || "Delete failed", "error");
+        }
+      } catch (err) {
+        // fallback to fetch
+        console.warn("api.delete /languages failed, falling back to fetch:", err);
+        try {
+          const r = await fetch(`${apiUrl.replace(/\/$/, "")}/api/languages/${id}`, {
+            method: "DELETE",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          });
+          const data = await r.json();
+          if (data.success) {
+            Swal.fire("Deleted!", "Language deleted successfully.", "success");
+            fetchLanguages();
+          } else {
+            Swal.fire("Error", data.message || "Delete failed", "error");
+          }
+        } catch (e) {
+          console.error("Delete fallback error:", e);
+          Swal.fire("Error", e.message || "Network error", "error");
+        }
+      }
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -1,7 +1,7 @@
 // AdminPendingPosts.jsx
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import Cookies from "js-cookie";
+import api from "@/utils/api"; 
 import Swal from "sweetalert2";
 import {
   CheckCircle,
@@ -33,68 +33,81 @@ export default function AdminPendingPosts() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-  // Fetch poems by status
-  const fetchPoems = useCallback(async (status) => {
-    try {
-      setLoading(true);
-      const token = Cookies.get("adminToken");
-      const res = await fetch(`${apiUrl}/api/poems/admin/poems/${status}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: "include",
-      });
+// Fetch poems by status
+const fetchPoems = useCallback(async (status) => {
+  try {
+    setLoading(true);
 
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-      setPosts(Array.isArray(data.poems) ? data.poems : []);
-    } catch (err) {
-      console.error("Error fetching poems:", err);
+    // verify admin session (httpOnly cookie will be sent automatically by api instance)
+    try {
+      await api.get("/auth/me");
+    } catch (verifyErr) {
       Swal.fire({
         icon: "error",
-        title: "Error!",
-        text: "Failed to fetch poems.",
+        title: "Not authorized",
+        text: "Admin session not found",
       });
-    } finally {
       setLoading(false);
+      return;
     }
-  }, [apiUrl]);
 
-  useEffect(() => {
-    fetchPoems(activeTab);
-  }, [activeTab, fetchPoems]);
+    const res = await api.get(`/poems/admin/poems/${status}`);
+    const data = res.data;
+    setPosts(Array.isArray(data.poems) ? data.poems : []);
+  } catch (err) {
+    console.error("Error fetching poems:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Error!",
+      text: "Failed to fetch poems.",
+    });
+  } finally {
+    setLoading(false);
+  }
+}, [apiUrl]);
 
-  // Handle status change (approve/reject)
-  const handleStatusChange = async (id, status) => {
+useEffect(() => {
+  fetchPoems(activeTab);
+}, [activeTab, fetchPoems]);
+
+// Handle status change (approve/reject)
+const handleStatusChange = async (id, status) => {
+  try {
+    // verify admin session
     try {
-      const token = Cookies.get("adminToken");
-      const res = await fetch(`${apiUrl}/api/poems/${id}/status`, {
-        method: "PUT",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status }),
-      });
-
-      const data = await res.json();
-      Swal.fire({
-        icon: "success",
-        title: data.message || `Post ${status} successfully!`,
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      fetchPoems(activeTab);
-    } catch (err) {
-      console.error("Status update error:", err);
+      await api.get("/auth/me");
+    } catch (verifyErr) {
       Swal.fire({
         icon: "error",
-        title: "Failed to update status",
-        text: "Server error occurred.",
+        title: "Not authorized",
+        text: "Admin session not found",
       });
+      return;
     }
-  };
 
-  // ✅ Delete poem handler
+    const res = await api.put(`/poems/${id}/status`, { status });
+    const data = res.data;
+
+    Swal.fire({
+      icon: "success",
+      title: data.message || `Post ${status} successfully!`,
+      timer: 1500,
+      showConfirmButton: false,
+    });
+
+    fetchPoems(activeTab);
+  } catch (err) {
+    console.error("Status update error:", err);
+    const errMsg = err?.response?.data?.message || err.message || "Server error occurred.";
+    Swal.fire({
+      icon: "error",
+      title: "Failed to update status",
+      text: errMsg,
+    });
+  }
+};
+
+// ✅ Delete poem handler
 // ✅ Replace your existing handleDeletePoem with this corrected version
 const handleDeletePoem = async (id) => {
   try {
@@ -111,18 +124,20 @@ const handleDeletePoem = async (id) => {
 
     if (!isConfirmed) return;
 
-    const token = Cookies.get("adminToken");
-    const res = await fetch(`${apiUrl}/api/poems/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    // verify admin session
+    try {
+      await api.get("/auth/me");
+    } catch (verifyErr) {
+      Swal.fire({
+        icon: "error",
+        title: "Not authorized",
+        text: "Admin session not found",
+      });
+      return;
+    }
 
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) throw new Error(data.message || "Delete failed");
+    const res = await api.delete(`/poems/${id}`);
+    const data = res.data || {};
 
     await Swal.fire({
       icon: "success",
@@ -142,14 +157,14 @@ const handleDeletePoem = async (id) => {
     }
   } catch (err) {
     console.error("Delete error:", err);
+    const errMsg = err?.response?.data?.message || err.message || "Server error while deleting poem";
     Swal.fire({
       icon: "error",
       title: "Delete failed",
-      text: err.message || "Server error while deleting poem",
+      text: errMsg,
     });
   }
 };
-
 
   // Preview handlers
   const handlePreview = (poem) => {

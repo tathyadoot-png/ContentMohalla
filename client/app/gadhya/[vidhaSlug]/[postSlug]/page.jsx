@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import Cookies from "js-cookie";
+// removed js-cookie usage
 import {
   FaHeart,
   FaRegHeart,
@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import RelatedGadhya from "../../../../components/content/RelatedPoems"; // adjust if path differs
+import api from "@/utils/api"; // ✅ axios instance (withCredentials: true)
 
 // helper to format counts like 1.4K
 const formatCount = (num) => {
@@ -55,29 +56,55 @@ export default function GadhyaPostPage() {
   const [bookmarked, setBookmarked] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const token = Cookies.get("token");
-
+  // 📌 Fetch post (try axios api first, fallback to fetch with credentials)
   useEffect(() => {
     if (!postSlug) return;
+
     const fetchPost = async () => {
       setLoading(true);
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/poems/slug/${postSlug}`,
-          {
-            cache: "no-store",
-            credentials: "include",
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          }
-        );
-        const data = await res.json();
+        const res = await api.get(`/poems/slug/${postSlug}`, {
+          headers: { "Cache-Control": "no-store" },
+        });
+        const data = res.data;
         const fetched = data.poem || data;
         setPost(fetched);
         setComments(fetched?.comments || data.comments || []);
         setLiked(data.userLiked ?? false);
         setBookmarked(data.userBookmarked ?? false);
-      } catch (err) {
-        console.error("Error fetching gadhya post:", err);
+      } catch (axiosErr) {
+        console.warn("api.get failed — falling back to fetch():", axiosErr);
+        // fallback to fetch using full URL so credentials: 'include' sends httpOnly cookie
+        try {
+          const base = process.env.NEXT_PUBLIC_API_URL;
+          if (!base) throw axiosErr;
+          const res = await fetch(`${base.replace(/\/$/, "")}/api/poems/slug/${postSlug}`, {
+            cache: "no-store",
+            credentials: "include",
+          });
+
+          if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            let body = {};
+            try {
+              body = text ? JSON.parse(text) : {};
+            } catch {
+              body = { message: text };
+            }
+            throw new Error(body?.message || `Fetch failed: ${res.status}`);
+          }
+
+          const data = await res.json();
+          const fetched = data.poem || data;
+          setPost(fetched);
+          setComments(fetched?.comments || data.comments || []);
+          setLiked(data.userLiked ?? false);
+          setBookmarked(data.userBookmarked ?? false);
+        } catch (fetchErr) {
+          console.error("Error fetching post (both axios & fetch):", fetchErr);
+          setPost(null);
+          setComments([]);
+        }
       } finally {
         setLoading(false);
       }
@@ -87,23 +114,13 @@ export default function GadhyaPostPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postSlug]);
 
-  // Like toggling
+  // LIKE
   const handleLike = async () => {
     if (!post?._id) return;
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/poems/${post._id}/like`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }
-      );
-      if (res.status === 401) {
-        alert("कृपया लॉगिन करें!");
-        return;
-      }
-      const data = await res.json();
+      // prefer axios
+      const res = await api.post(`/poems/${post._id}/like`);
+      const data = res.data;
       if (data.success) {
         setLiked(data.isLiked);
         if (data.likesCount !== undefined) {
@@ -116,73 +133,124 @@ export default function GadhyaPostPage() {
         }
       }
     } catch (err) {
-      console.error("Like error:", err);
-    }
-  };
-
-  // Bookmark toggling
-  const handleBookmark = async () => {
-    if (!post?._id) return;
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/poems/${post._id}/bookmark`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }
-      );
-      if (res.status === 401) {
+      // handle auth or network
+      const status = err?.response?.status;
+      if (status === 401) {
         alert("कृपया लॉगिन करें!");
         return;
       }
-      const data = await res.json();
-      if (data.success) {
-        setBookmarked(data.isBookmarked ?? !bookmarked);
-        if (data.bookmarksCount !== undefined) {
-          setPost((p) => ({ ...p, bookmarksCount: data.bookmarksCount }));
+      console.error("Like error (axios):", err);
+
+      // fallback to fetch
+      try {
+        const base = process.env.NEXT_PUBLIC_API_URL;
+        if (!base) throw err;
+        const res = await fetch(`${base.replace(/\/$/, "")}/api/poems/${post._id}/like`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (res.status === 401) {
+          alert("कृपया लॉगिन करें!");
+          return;
         }
+        const data = await res.json();
+        if (data.success) {
+          setLiked(data.isLiked);
+          if (data.likesCount !== undefined) setPost((p) => ({ ...p, likeCount: data.likesCount }));
+        }
+      } catch (fallbackErr) {
+        console.error("Like fallback error:", fallbackErr);
       }
-    } catch (err) {
-      console.error("Bookmark error:", err);
     }
   };
 
-  // Add comment
+  // BOOKMARK
+  const handleBookmark = async () => {
+    if (!post?._id) return;
+    try {
+      const res = await api.post(`/poems/${post._id}/bookmark`);
+      const data = res.data;
+      if (data.success) {
+        setBookmarked(data.isBookmarked ?? !bookmarked);
+        if (data.bookmarksCount !== undefined) setPost((p) => ({ ...p, bookmarksCount: data.bookmarksCount }));
+      }
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 401) {
+        alert("कृपया लॉगिन करें!");
+        return;
+      }
+      console.error("Bookmark error (axios):", err);
+
+      // fallback
+      try {
+        const base = process.env.NEXT_PUBLIC_API_URL;
+        if (!base) throw err;
+        const res = await fetch(`${base.replace(/\/$/, "")}/api/poems/${post._id}/bookmark`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (res.status === 401) {
+          alert("कृपया लॉगिन करें!");
+          return;
+        }
+        const data = await res.json();
+        if (data.success) {
+          setBookmarked(data.isBookmarked ?? !bookmarked);
+          if (data.bookmarksCount !== undefined) setPost((p) => ({ ...p, bookmarksCount: data.bookmarksCount }));
+        }
+      } catch (fallbackErr) {
+        console.error("Bookmark fallback error:", fallbackErr);
+      }
+    }
+  };
+
+  // ADD COMMENT
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     if (!post?._id) return;
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/poems/${post._id}/comment`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-          body: JSON.stringify({ commentText: newComment }),
-        }
-      );
-
-      if (res.status === 401) {
-        alert("कृपया लॉगिन करें!");
-        return;
-      }
-
-      const data = await res.json();
+      const res = await api.post(`/poems/${post._id}/comment`, { commentText: newComment });
+      const data = res.data;
       if (data.success) {
         setComments(data.comments || []);
         setNewComment("");
       }
     } catch (err) {
-      console.error("Comment error:", err);
+      const status = err?.response?.status;
+      if (status === 401) {
+        alert("कृपया लॉगिन करें!");
+        return;
+      }
+      console.error("Comment error (axios):", err);
+
+      // fallback
+      try {
+        const base = process.env.NEXT_PUBLIC_API_URL;
+        if (!base) throw err;
+        const res = await fetch(`${base.replace(/\/$/, "")}/api/poems/${post._id}/comment`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ commentText: newComment }),
+        });
+        if (res.status === 401) {
+          alert("कृपया लॉगिन करें!");
+          return;
+        }
+        const data = await res.json();
+        if (data.success) {
+          setComments(data.comments || []);
+          setNewComment("");
+        }
+      } catch (fallbackErr) {
+        console.error("Comment fallback error:", fallbackErr);
+      }
     }
   };
 
-  // Share (navigator.share fallback to clipboard)
+  // SHARE
   const handleShare = async () => {
     const shareUrl = window.location.href;
     try {
@@ -368,35 +436,6 @@ export default function GadhyaPostPage() {
               </div>
             )}
           </div>
-
-          {/* ACTION BAR (duplicate smaller bar for quick access) */}
-          {/* <div className="flex items-center justify-between border-t border-b py-4 px-2 text-sm" style={{ borderColor: "var(--glass-border)", color: "var(--text)" }}>
-            <div className="flex items-center gap-6">
-              <motion.button whileTap={{ scale: 0.95 }} onClick={handleLike} className="flex items-center gap-2">
-                {liked ? <FaHeart className="text-primary" style={{ color: "var(--primary)" }} /> : <FaRegHeart />}
-                <span style={{ color: "var(--text)" }}>{formatCount(post.likeCount ?? post.likes?.length ?? 0)}</span>
-              </motion.button>
-
-              <motion.button whileTap={{ scale: 0.95 }} onClick={handleShare} className="flex items-center gap-2">
-                <FaShareAlt />
-                <span style={{ color: "var(--text)" }}>साझा करें</span>
-              </motion.button>
-            </div>
-
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleBookmark}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full"
-              style={{
-                color: "var(--primary)",
-                border: "1px solid var(--primary)",
-                background: "transparent",
-              }}
-            >
-              {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
-              <span style={{ color: "var(--primary)" }}>{formatCount(post.bookmarksCount ?? post.bookmarks?.length ?? 0)}</span>
-            </motion.button>
-          </div> */}
 
           {/* COMMENTS */}
           <div className="p-2 space-y-6">
